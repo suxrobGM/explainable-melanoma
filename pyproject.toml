@@ -1,0 +1,61 @@
+[project]
+name = "explainable-melanoma-detection"
+version = "0.1.0"
+description = "Explainable Melanoma Detection"
+authors = [
+    {name = "Sukhrob Ilyosbekov", email = "suxrobgm@gmail.com"},
+]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = "<3.15,>=3.14"
+
+dependencies = [
+    "Pillow>=12.0.0", 
+    "tqdm>=4.67.1", 
+    "rich>=14.2.0", 
+    "torch>=2.9.0", 
+    "torchvision>=0.24.0", 
+    "numpy>=2.3.4", 
+    "pandas>=2.3.3", 
+    "PyYAML>=6.0.3", 
+    "transformers>=4.57.1", 
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.11.0",
+    "isort>=7.0.0",
+]
+
+[tool.pdm.scripts]
+train = "python scripts/train.py --config config.yaml"
+eval = "python scripts/eval.py --checkpoint checkpoints/best_model.pth --config config.yaml"
+infer = "python scripts/infer.py --checkpoint checkpoints/best_model.pth --input image.png --output depth.png --colormap plasma"
+
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.build]
+package-dir = "src"
+includes = ["melanomanet"]
+
+[tool.pdm.resolution]
+respect-source-order = true
+
+[[tool.pdm.source]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cu130"
+verify_ssl = true
+
+[[tool.pdm.source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[tool.isort]
+profile = "black"
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
