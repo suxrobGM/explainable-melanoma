@@ -55,6 +55,24 @@ gradcam:
   target_layer: "features.8"  # Last conv layer for EfficientNet-B0
   use_gradcam_pp: true  # Use GradCAM++ instead of GradCAM
 
+# ABCDE Criterion Analysis Configuration
+abcde:
+  # A - Asymmetry threshold (0-1, higher = more asymmetric)
+  asymmetry_threshold: 0.3
+
+  # B - Border irregularity threshold (0-1, higher = more irregular)
+  border_threshold: 0.4
+
+  # C - Color variation (number of distinct colors indicating concern)
+  color_threshold: 3
+
+  # D - Diameter threshold in pixels (approximate, depends on image resolution)
+  # For 224x224 images, ~50px ≈ 6mm if lesion fills ~50% of image
+  diameter_threshold_px: 50
+
+  # Enable ABCDE-GradCAM alignment analysis
+  enable_alignment_analysis: true
+
 # Paths
 paths:
   checkpoint_dir: "./checkpoints"
