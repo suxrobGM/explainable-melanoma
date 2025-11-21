@@ -1,6 +1,10 @@
 """
 Training script for MelanomaNet.
 
+Args:
+    --config: Path to configuration YAML file
+    --resume: (Optional) Path to checkpoint file to resume training from
+
 Usage:
     python scripts/train.py --config config.yaml
 """
@@ -166,12 +170,13 @@ def validate(
     return metrics
 
 
-def train(config: dict[str, Any]) -> None:
+def train(config: dict[str, Any], resume_checkpoint: str | None = None) -> None:
     """
     Main training loop.
 
     Args:
         config: Configuration dictionary
+        resume_checkpoint: Path to checkpoint file to resume training from
     """
     # Setup
     set_seed(config["seed"])
@@ -214,14 +219,35 @@ def train(config: dict[str, Any]) -> None:
     else:
         scheduler = None
 
-    # Training loop
+    # Initialize training state
+    start_epoch = 0
     best_val_auc = 0.0
     patience_counter = 0
+
+    # Resume from checkpoint if provided
+    if resume_checkpoint:
+        console.print(
+            f"[bold yellow]Resuming from checkpoint: {resume_checkpoint}[/bold yellow]"
+        )
+        checkpoint = load_checkpoint(
+            Path(resume_checkpoint),
+            model,
+            optimizer,
+            scheduler,
+            device,
+        )
+        start_epoch = checkpoint["epoch"] + 1
+        best_val_auc = checkpoint["metrics"].get("auc", 0.0)
+        console.print(
+            f"[bold green]Resumed from epoch {checkpoint['epoch'] + 1}[/bold green]"
+        )
+        console.print(f"[bold green]Best AUC so far: {best_val_auc:.4f}[/bold green]\n")
+
     patience = config["training"]["early_stopping_patience"]
 
     console.print("\n[bold cyan]Starting training...[/bold cyan]\n")
 
-    for epoch in range(config["training"]["epochs"]):
+    for epoch in range(start_epoch, config["training"]["epochs"]):
         # Train
         train_loss = train_one_epoch(
             model, train_loader, criterion, optimizer, device, epoch, config
@@ -250,6 +276,16 @@ def train(config: dict[str, Any]) -> None:
         console.print(table)
         console.print()
 
+        # Save checkpoint at every epoch (for resuming)
+        save_checkpoint(
+            model,
+            optimizer,
+            epoch,
+            val_metrics,
+            Path(config["paths"]["checkpoint_dir"]) / "last_checkpoint.pth",
+            scheduler=scheduler,
+        )
+
         # Save best model
         if val_metrics["auc"] > best_val_auc:
             best_val_auc = val_metrics["auc"]
@@ -259,6 +295,7 @@ def train(config: dict[str, Any]) -> None:
                 epoch,
                 val_metrics,
                 Path(config["paths"]["checkpoint_dir"]) / "best_model.pth",
+                scheduler=scheduler,
             )
             console.print(
                 f"[bold green]New best model saved! AUC: {best_val_auc:.4f}[/bold green]\n"
@@ -266,6 +303,26 @@ def train(config: dict[str, Any]) -> None:
             patience_counter = 0
         else:
             patience_counter += 1
+
+        # Save periodic checkpoint (every N epochs, if configured)
+        save_interval = config.get("training", {}).get("checkpoint_save_interval", 0)
+
+        if save_interval > 0 and (epoch + 1) % save_interval == 0:
+            checkpoint_path = (
+                Path(config["paths"]["checkpoint_dir"])
+                / f"checkpoint_epoch_{epoch+1}.pth"
+            )
+            save_checkpoint(
+                model,
+                optimizer,
+                epoch,
+                val_metrics,
+                checkpoint_path,
+                scheduler=scheduler,
+            )
+            console.print(
+                f"[bold cyan]Checkpoint saved at epoch {epoch+1}[/bold cyan]\n"
+            )
 
         # Early stopping
         if patience_counter >= patience:
@@ -282,13 +339,19 @@ def train(config: dict[str, Any]) -> None:
 def main():
     parser = argparse.ArgumentParser(description="Train MelanomaNet")
     parser.add_argument("--config", type=str, required=True, help="Path to config file")
+    parser.add_argument(
+        "--resume",
+        type=str,
+        default=None,
+        help="Path to checkpoint file to resume training from",
+    )
     args = parser.parse_args()
 
     # Load config
     with open(args.config, "r") as f:
         config = yaml.safe_load(f)
 
-    train(config)
+    train(config, resume_checkpoint=args.resume)
 
 
 if __name__ == "__main__":
