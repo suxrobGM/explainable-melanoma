@@ -1,6 +1,10 @@
 """
 Evaluation script for trained MelanomaNet.
 
+Args:
+    --config: Path to configuration YAML file
+    --checkpoint: Path to model checkpoint file
+
 Usage:
     python scripts/eval.py --checkpoint checkpoints/best_model.pth --config config.yaml
 """

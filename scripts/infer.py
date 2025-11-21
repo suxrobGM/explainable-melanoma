@@ -1,5 +1,11 @@
 """
-Inference script with GradCAM++ visualization.
+Inference script with GradCAM++ visualization and ABCDE analysis.
+
+Args:
+    --config: Path to configuration YAML file
+    --checkpoint: Path to model checkpoint file
+    --input: Path to input dermoscopic image
+    --output: Path to save visualization
 
 Usage:
     python scripts/infer.py --checkpoint checkpoints/best_model.pth \
@@ -34,7 +40,6 @@ def run_inference(
     checkpoint_path: str,
     image_path: str,
     output_path: str,
-    enable_abcde: bool = True,
 ) -> None:
     """
     Run inference on a single image with attention visualization and ABCDE analysis.
@@ -44,11 +49,13 @@ def run_inference(
         checkpoint_path: Path to model checkpoint
         image_path: Path to input dermoscopic image
         output_path: Path to save visualization
-        enable_abcde: Whether to perform ABCDE criterion analysis
     """
     # Load config
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
+
+    # Read ABCDE enable flag from config
+    enable_abcde = config.get("abcde", {}).get("enable", True)
 
     device = torch.device(config["device"] if torch.cuda.is_available() else "cpu")
 
@@ -300,20 +307,9 @@ def main():
     )
     parser.add_argument("--input", type=str, required=True, help="Path to input image")
     parser.add_argument("--output", type=str, required=True, help="Path to save output")
-    parser.add_argument(
-        "--no-abcde",
-        action="store_true",
-        help="Disable ABCDE criterion analysis",
-    )
     args = parser.parse_args()
 
-    run_inference(
-        args.config,
-        args.checkpoint,
-        args.input,
-        args.output,
-        enable_abcde=not args.no_abcde,
-    )
+    run_inference(args.config, args.checkpoint, args.input, args.output)
 
 
 if __name__ == "__main__":

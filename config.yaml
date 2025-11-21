@@ -57,6 +57,9 @@ gradcam:
 
 # ABCDE Criterion Analysis Configuration
 abcde:
+  # Enable ABCDE analysis during inference
+  enable: true
+
   # A - Asymmetry threshold (0-1, higher = more asymmetric)
   asymmetry_threshold: 0.3
 
@@ -81,6 +84,6 @@ paths:
   attention_maps_dir: "./outputs/attention_maps"
 
 # Miscellaneous
-seed: 42
+seed: 25
 device: "cuda"  # or "cpu"
 mixed_precision: true  # Use automatic mixed precision training
