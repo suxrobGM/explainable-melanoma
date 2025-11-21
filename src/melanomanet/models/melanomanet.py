@@ -5,9 +5,9 @@ Architecture: EfficientNet backbone with custom classification head.
 Supports GradCAM++ for attention visualization.
 """
 
+import timm
 import torch
 import torch.nn as nn
-import timm
 
 
 class MelanomaNet(nn.Module):
@@ -29,7 +29,7 @@ class MelanomaNet(nn.Module):
         backbone: str = "efficientnet_b0",
         num_classes: int = 2,
         pretrained: bool = True,
-        dropout_rate: float = 0.3
+        dropout_rate: float = 0.3,
     ):
         super().__init__()
 
@@ -38,7 +38,7 @@ class MelanomaNet(nn.Module):
             backbone,
             pretrained=pretrained,
             num_classes=0,  # Remove original classifier
-            global_pool=''  # Remove global pooling, we'll add custom
+            global_pool="",  # Remove global pooling, we'll add custom
         )
 
         # Get feature dimension
@@ -47,8 +47,7 @@ class MelanomaNet(nn.Module):
         # Custom classification head
         self.global_pool = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Sequential(
-            nn.Dropout(p=dropout_rate),
-            nn.Linear(self.feature_dim, num_classes)
+            nn.Dropout(p=dropout_rate), nn.Linear(self.feature_dim, num_classes)
         )
 
         # Store architecture info for GradCAM
@@ -84,7 +83,7 @@ class MelanomaNet(nn.Module):
             Last conv layer module
         """
         # For EfficientNet, last conv is in blocks[-1]
-        if hasattr(self.backbone, 'blocks'):
+        if hasattr(self.backbone, "blocks"):
             return self.backbone.blocks[-1]
         else:
             raise AttributeError(f"Cannot find conv layer in {self.backbone_name}")
@@ -101,10 +100,10 @@ def create_model(config: dict) -> MelanomaNet:
         Initialized MelanomaNet model
     """
     model = MelanomaNet(
-        backbone=config['model']['backbone'],
-        num_classes=config['data']['num_classes'],
-        pretrained=config['model']['pretrained'],
-        dropout_rate=config['model']['dropout_rate']
+        backbone=config["model"]["backbone"],
+        num_classes=config["data"]["num_classes"],
+        pretrained=config["model"]["pretrained"],
+        dropout_rate=config["model"]["dropout_rate"],
     )
 
     return model

@@ -148,8 +148,8 @@ def denormalize_image(
 
     Args:
         image: Normalized image tensor (3, H, W) or (1, 3, H, W)
-        mean: Mean used for normalization
-        std: Std used for normalization
+        mean: Mean used for normalization. Default is ImageNet mean (0.485, 0.456, 0.406)
+        std: Std used for normalization. Default is ImageNet std (0.229, 0.224, 0.225)
 
     Returns:
         Denormalized numpy array (H, W, 3) with values [0, 1]

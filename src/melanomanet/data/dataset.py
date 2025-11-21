@@ -4,7 +4,7 @@ Handles ISIC2019 dataset with preprocessing and augmentation.
 """
 
 from pathlib import Path
-from typing import Callable, Optional, Tuple
+from typing import Callable
 
 import pandas as pd
 import torch
@@ -33,7 +33,7 @@ class MelanomaDataset(Dataset):
         self,
         image_dir: str,
         labels_df: pd.DataFrame,
-        transform: Optional[Callable] = None,
+        transform: Callable | None = None,
     ):
         self.image_dir = Path(image_dir)
         self.labels_df = labels_df.reset_index(drop=True)
@@ -68,7 +68,7 @@ class MelanomaDataset(Dataset):
     def __len__(self) -> int:
         return len(self.labels_df)
 
-    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int, str]:
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, int, str]:
         """
         Load and return a single sample.
 

@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import argparse
 import random
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 import torch
@@ -51,7 +51,7 @@ def train_one_epoch(
     optimizer: torch.optim.Optimizer,
     device: torch.device,
     epoch: int,
-    config: Dict[str, Any],
+    config: dict[str, Any],
 ) -> float:
     """
     Train for one epoch.
@@ -114,7 +114,7 @@ def validate(
     criterion: nn.Module,
     device: torch.device,
     epoch: int,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Validate model.
 
@@ -166,7 +166,7 @@ def validate(
     return metrics
 
 
-def train(config: Dict[str, Any]) -> None:
+def train(config: dict[str, Any]) -> None:
     """
     Main training loop.
 

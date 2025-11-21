@@ -25,10 +25,7 @@ class FocalLoss(nn.Module):
     """
 
     def __init__(
-        self,
-        alpha: float = 0.25,
-        gamma: float = 2.0,
-        reduction: str = 'mean'
+        self, alpha: float = 0.25, gamma: float = 2.0, reduction: str = "mean"
     ):
         super().__init__()
         self.alpha = alpha
@@ -44,13 +41,13 @@ class FocalLoss(nn.Module):
         Returns:
             Focal loss value
         """
-        ce_loss = F.cross_entropy(inputs, targets, reduction='none')
+        ce_loss = F.cross_entropy(inputs, targets, reduction="none")
         p_t = torch.exp(-ce_loss)
         focal_loss = self.alpha * (1 - p_t) ** self.gamma * ce_loss
 
-        if self.reduction == 'mean':
+        if self.reduction == "mean":
             return focal_loss.mean()
-        elif self.reduction == 'sum':
+        elif self.reduction == "sum":
             return focal_loss.sum()
         else:
             return focal_loss
@@ -67,15 +64,15 @@ def create_criterion(config: dict, class_weights: torch.Tensor) -> nn.Module:
     Returns:
         Loss criterion module
     """
-    if config['training'].get('focal_loss', False):
+    if config["training"].get("focal_loss", False):
         # Focal loss
         criterion = FocalLoss(
-            alpha=config['training']['focal_alpha'],
-            gamma=config['training']['focal_gamma']
+            alpha=config["training"]["focal_alpha"],
+            gamma=config["training"]["focal_gamma"],
         )
     else:
         # Weighted cross entropy
-        if config['training']['use_class_weights']:
+        if config["training"]["use_class_weights"]:
             criterion = nn.CrossEntropyLoss(weight=class_weights)
         else:
             criterion = nn.CrossEntropyLoss()
