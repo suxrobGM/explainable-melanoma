@@ -7,16 +7,17 @@ from typing import Any
 
 import torch
 import torch.nn as nn
+from torch.optim import Optimizer
+from torch.optim.lr_scheduler import LRScheduler
 
 
 def save_checkpoint(
     model: nn.Module,
-    optimizer: torch.optim.Optimizer,
+    optimizer: Optimizer,
     epoch: int,
     metrics: dict[str, float],
     filepath: Path,
-    scheduler: Any = None,
-    **kwargs: Any,
+    scheduler: LRScheduler | None = None,
 ) -> None:
     """
     Save model checkpoint.
@@ -41,9 +42,6 @@ def save_checkpoint(
     if scheduler is not None:
         checkpoint["scheduler_state_dict"] = scheduler.state_dict()
 
-    # Add any additional items
-    checkpoint.update(kwargs)
-
     # Create parent directory if it doesn't exist
     filepath.parent.mkdir(parents=True, exist_ok=True)
 
@@ -53,8 +51,8 @@ def save_checkpoint(
 def load_checkpoint(
     filepath: Path,
     model: nn.Module,
-    optimizer: torch.optim.Optimizer | None = None,
-    scheduler: Any = None,
+    optimizer: Optimizer | None = None,
+    scheduler: LRScheduler | None = None,
     device: torch.device | None = None,
 ) -> dict[str, Any]:
     """

@@ -89,7 +89,7 @@ def train_one_epoch(
         optimizer.zero_grad()
 
         # Forward pass with mixed precision
-        if use_amp:
+        if use_amp and scaler is not None:
             with torch.amp.autocast_mode.autocast("cuda"):
                 outputs = model(images)
                 loss = criterion(outputs, labels)
