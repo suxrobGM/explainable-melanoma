@@ -9,14 +9,17 @@ import torch.nn.functional as F
 
 class FocalLoss(nn.Module):
     """
-    Focal Loss for addressing class imbalance.
+    Focal Loss for addressing class imbalance in multi-class classification.
 
     FL(p_t) = -alpha_t * (1 - p_t)^gamma * log(p_t)
 
     Focuses training on hard examples by down-weighting easy examples.
+    Supports both binary and multi-class classification.
 
     Args:
-        alpha: Weighting factor for class imbalance [0, 1]
+        alpha: Weighting factor for class imbalance
+               - float: uniform weight for all classes
+               - Tensor: per-class weights of shape (num_classes,)
         gamma: Focusing parameter (gamma > 0 reduces loss for well-classified)
         reduction: 'mean' or 'sum'
 
@@ -25,7 +28,10 @@ class FocalLoss(nn.Module):
     """
 
     def __init__(
-        self, alpha: float = 0.25, gamma: float = 2.0, reduction: str = "mean"
+        self,
+        alpha: float | torch.Tensor = 0.25,
+        gamma: float = 2.0,
+        reduction: str = "mean",
     ):
         super().__init__()
         self.alpha = alpha
@@ -43,7 +49,16 @@ class FocalLoss(nn.Module):
         """
         ce_loss = F.cross_entropy(inputs, targets, reduction="none")
         p_t = torch.exp(-ce_loss)
-        focal_loss = self.alpha * (1 - p_t) ** self.gamma * ce_loss
+
+        # Apply alpha weighting (supports both uniform and per-class)
+        if isinstance(self.alpha, torch.Tensor):
+            # Per-class alpha
+            alpha_t = self.alpha.to(inputs.device)[targets]
+        else:
+            # Uniform alpha
+            alpha_t = self.alpha
+
+        focal_loss = alpha_t * (1 - p_t) ** self.gamma * ce_loss
 
         if self.reduction == "mean":
             return focal_loss.mean()

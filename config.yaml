@@ -5,27 +5,29 @@ data:
   train_split: 0.7
   val_split: 0.15
   test_split: 0.15
-  num_classes: 2  # Binary: Melanoma vs Benign
-  class_names: ["Benign", "Melanoma"]
-  image_size: 224 # Input image size
+  num_classes: 9  # Multi-class: All ISIC 2019 diagnostic categories
+  class_names: ["MEL", "NV", "BCC", "AK", "BKL", "DF", "VASC", "SCC", "UNK"]
+  # MEL: Melanoma, NV: Nevus, BCC: Basal cell carcinoma, AK: Actinic keratosis
+  # BKL: Benign keratosis, DF: Dermatofibroma, VASC: Vascular, SCC: Squamous cell carcinoma, UNK: Unknown
+  image_size: 512  # Input image size 
   num_workers: 4
 
 # Model Configuration
 model:
-  backbone: "efficientnet_b0"  # or "efficientnet_b4"
+  backbone: "efficientnet_v2_l"  # Options: efficientnet_v2_s, efficientnet_v2_m, efficientnet_v2_l
   pretrained: true
   dropout_rate: 0.3
 
 # Training Configuration
 training:
-  batch_size: 32
-  epochs: 40
+  batch_size: 12
+  epochs: 50
   learning_rate: 0.0001
   weight_decay: 0.0001
   optimizer: "adam"
   scheduler: "cosine"  # cosine annealing
   early_stopping_patience: 10
-  checkpoint_save_interval: 10  # Save checkpoint every N epochs (0 to disable)
+  checkpoint_save_interval: 5  # Save checkpoint every N epochs (0 to disable)
 
   # Class imbalance handling
   use_class_weights: true
@@ -52,7 +54,7 @@ evaluation:
 
 # GradCAM Configuration
 gradcam:
-  target_layer: "features.8"  # Last conv layer for EfficientNet-B0
+  target_layer: "auto"  # Auto-detected based on backbone architecture
   use_gradcam_pp: true  # Use GradCAM++ instead of GradCAM
 
 # ABCDE Criterion Analysis Configuration
@@ -70,8 +72,8 @@ abcde:
   color_threshold: 3
 
   # D - Diameter threshold in pixels (approximate, depends on image resolution)
-  # For 224x224 images, ~50px ≈ 6mm if lesion fills ~50% of image
-  diameter_threshold_px: 50
+  # For 512x512 images, ~114px ≈ 6mm if lesion fills ~50% of image
+  diameter_threshold_px: 114
 
   # Enable ABCDE-GradCAM alignment analysis
   enable_alignment_analysis: true

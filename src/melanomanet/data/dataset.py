@@ -1,5 +1,5 @@
 """
-Dataset module for melanoma detection.
+Dataset module for skin lesion classification.
 Handles ISIC2019 dataset with preprocessing and augmentation.
 """
 
@@ -14,7 +14,7 @@ from torch.utils.data import Dataset
 
 class MelanomaDataset(Dataset):
     """
-    Custom dataset for melanoma detection from dermoscopic images.
+    Custom dataset for skin lesion classification from dermoscopic images.
 
     Supports ISIC2019 dataset with configurable preprocessing
     and augmentation pipelines.
@@ -22,7 +22,7 @@ class MelanomaDataset(Dataset):
     Args:
         image_dir: Directory containing dermoscopic images
         labels_df: DataFrame with columns ['image_id', 'target']
-                  where target: 0=Benign, 1=Melanoma
+                  where target: class index (0-8 for ISIC 2019 9 classes)
         transform: Optional torchvision transforms to apply
 
     Returns:
@@ -74,7 +74,7 @@ class MelanomaDataset(Dataset):
 
         Returns:
             image: Transformed image tensor (C, H, W)
-            label: Binary label (0=Benign, 1=Melanoma)
+            label: Multi-class label (0-8 for ISIC 2019)
             image_id: String identifier for the image
         """
         # Get image metadata
@@ -93,18 +93,32 @@ class MelanomaDataset(Dataset):
         return image, label, image_id
 
 
-def get_class_weights(labels_df: pd.DataFrame) -> torch.Tensor:
+def get_class_weights(labels_df: pd.DataFrame, num_classes: int = 9) -> torch.Tensor:
     """
     Calculate class weights for imbalanced dataset.
     Uses inverse frequency weighting.
 
     Args:
         labels_df: DataFrame with 'target' column
+        num_classes: Total number of classes (default: 9 for ISIC 2019)
 
     Returns:
-        Tensor of class weights [weight_benign, weight_melanoma]
+        Tensor of class weights for all classes
+        Classes with 0 samples get weight 0.0 (won't affect loss)
     """
-    class_counts = labels_df["target"].value_counts().sort_index().values
+    # Initialize weights for all classes
+    weights = torch.zeros(num_classes, dtype=torch.float32)
+
+    # Get counts for all classes (including those with 0 samples)
     total = len(labels_df)
-    weights = total / (len(class_counts) * class_counts)
-    return torch.FloatTensor(weights)
+
+    for class_idx in range(num_classes):
+        count = (labels_df["target"] == class_idx).sum()
+        if count > 0:
+            # Inverse frequency weighting for classes with samples
+            weights[class_idx] = total / (num_classes * count)
+        else:
+            # Classes with no samples get 0 weight
+            weights[class_idx] = 0.0
+
+    return weights

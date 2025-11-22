@@ -1,57 +1,80 @@
 """
 MelanomaNet: Explainable melanoma detection model.
 
-Architecture: EfficientNet backbone with custom classification head.
+Architecture: EfficientNet V2 backbone with custom classification head.
 Supports GradCAM++ for attention visualization.
 """
 
-import timm
 import torch
 import torch.nn as nn
+import torchvision.models as tv_models
 
 
 class MelanomaNet(nn.Module):
     """
-    MelanomaNet model for binary melanoma classification.
+    MelanomaNet model for multi-class skin lesion classification.
 
-    Uses pretrained EfficientNet backbone with custom head for
-    melanoma detection. Designed for attention-based explainability.
+    Uses pretrained EfficientNet V2 backbone with custom head for
+    skin lesion detection. Designed for attention-based explainability.
 
     Args:
-        backbone: EfficientNet variant ('efficientnet_b0' to 'efficientnet_b4')
-        num_classes: Number of output classes (default: 2 for binary)
+        backbone: EfficientNet V2 variant ('efficientnet_v2_s', 'efficientnet_v2_m',
+                  'efficientnet_v2_l')
+        num_classes: Number of output classes (default: 9 for ISIC 2019)
         pretrained: Whether to use ImageNet pretrained weights
         dropout_rate: Dropout rate in classification head
     """
 
     def __init__(
         self,
-        backbone: str = "efficientnet_b0",
+        backbone: str = "efficientnet_v2_l",
         num_classes: int = 2,
         pretrained: bool = True,
         dropout_rate: float = 0.3,
     ):
         super().__init__()
 
-        # Load pretrained EfficientNet from timm
-        self.backbone = timm.create_model(
-            backbone,
-            pretrained=pretrained,
-            num_classes=0,  # Remove original classifier
-            global_pool="",  # Remove global pooling, we'll add custom
-        )
+        self.backbone_name = backbone
 
-        # Get feature dimension
-        self.feature_dim = self.backbone.num_features
+        # Load from torchvision
+        if backbone == "efficientnet_v2_s":
+            weights = (
+                tv_models.EfficientNet_V2_S_Weights.IMAGENET1K_V1
+                if pretrained
+                else None
+            )
+            model = tv_models.efficientnet_v2_s(weights=weights)
+            self.feature_dim = 1280  # V2-S output channels
+        elif backbone == "efficientnet_v2_m":
+            weights = (
+                tv_models.EfficientNet_V2_M_Weights.IMAGENET1K_V1
+                if pretrained
+                else None
+            )
+            model = tv_models.efficientnet_v2_m(weights=weights)
+            self.feature_dim = 1280  # V2-M output channels
+        elif backbone == "efficientnet_v2_l":
+            weights = (
+                tv_models.EfficientNet_V2_L_Weights.IMAGENET1K_V1
+                if pretrained
+                else None
+            )
+            model = tv_models.efficientnet_v2_l(weights=weights)
+            self.feature_dim = 1280  # V2-L output channels
+        else:
+            raise ValueError(
+                f"Unsupported EfficientNet V2 variant: {backbone}. "
+                f"Choose from: efficientnet_v2_s, efficientnet_v2_m, efficientnet_v2_l"
+            )
+
+        # Extract feature extractor (remove classifier)
+        self.backbone = model.features
 
         # Custom classification head
         self.global_pool = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Sequential(
             nn.Dropout(p=dropout_rate), nn.Linear(self.feature_dim, num_classes)
         )
-
-        # Store architecture info for GradCAM
-        self.backbone_name = backbone
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -82,11 +105,10 @@ class MelanomaNet(nn.Module):
         Returns:
             Last conv layer module
         """
-        # For EfficientNet, last conv is in blocks[-1]
-        if hasattr(self.backbone, "blocks"):
-            return self.backbone.blocks[-1]
-        else:
-            raise AttributeError(f"Cannot find conv layer in {self.backbone_name}")
+        # For EfficientNet V2 (torchvision), backbone is nn.Sequential
+        # Access the last layer
+        layers = list(self.backbone.children())
+        return layers[-1]
 
 
 def create_model(config: dict) -> MelanomaNet:
