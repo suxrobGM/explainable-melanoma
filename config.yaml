@@ -9,24 +9,23 @@ data:
   class_names: ["MEL", "NV", "BCC", "AK", "BKL", "DF", "VASC", "SCC", "UNK"]
   # MEL: Melanoma, NV: Nevus, BCC: Basal cell carcinoma, AK: Actinic keratosis
   # BKL: Benign keratosis, DF: Dermatofibroma, VASC: Vascular, SCC: Squamous cell carcinoma, UNK: Unknown
-  image_size: 512  # Input image size 
-  num_workers: 4
+  image_size: 384  # Input image size (384x384 for EfficientNetV2-M, 512x512 for EfficientNetV2-L)
+  num_workers: 12  # Increase for faster data loading to keep GPU fed
 
 # Model Configuration
 model:
-  backbone: "efficientnet_v2_l"  # Options: efficientnet_v2_s, efficientnet_v2_m, efficientnet_v2_l
+  backbone: "efficientnet_v2_m"  # Options: efficientnet_v2_s, efficientnet_v2_m, efficientnet_v2_l
   pretrained: true
   dropout_rate: 0.3
 
 # Training Configuration
 training:
-  batch_size: 12
+  batch_size: 32  # Increase to maximize GPU memory usage
   epochs: 50
   learning_rate: 0.0001
   weight_decay: 0.0001
   optimizer: "adam"
   scheduler: "cosine"  # cosine annealing
-  early_stopping_patience: 10
   checkpoint_save_interval: 5  # Save checkpoint every N epochs (0 to disable)
 
   # Class imbalance handling

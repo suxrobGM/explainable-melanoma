@@ -134,6 +134,8 @@ def create_data_loaders(
         num_workers=num_workers,
         pin_memory=True,
         drop_last=True,  # For stable batch norm
+        persistent_workers=True,  # Keep workers alive between epochs
+        prefetch_factor=4,  # Preload 4 batches per worker
     )
 
     val_loader = DataLoader(
@@ -142,6 +144,8 @@ def create_data_loaders(
         shuffle=False,
         num_workers=num_workers,
         pin_memory=True,
+        persistent_workers=True,
+        prefetch_factor=4,
     )
 
     test_loader = DataLoader(
@@ -150,6 +154,8 @@ def create_data_loaders(
         shuffle=False,
         num_workers=num_workers,
         pin_memory=True,
+        persistent_workers=True,
+        prefetch_factor=4,
     )
 
     return train_loader, val_loader, test_loader, class_weights

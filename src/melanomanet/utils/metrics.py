@@ -1,5 +1,5 @@
 """
-Evaluation metrics for melanoma detection.
+Evaluation metrics for multi-class skin lesion classification.
 """
 
 import numpy as np
@@ -7,59 +7,44 @@ from sklearn.metrics import (
     accuracy_score,
     classification_report,
     confusion_matrix,
-    roc_auc_score,
+    f1_score,
+    precision_score,
+    recall_score,
 )
 
 
 class MetricsTracker:
-    """Calculate and track evaluation metrics."""
+    """Calculate and track evaluation metrics for multi-class classification."""
 
     def calculate_metrics(
         self, y_true: np.ndarray, y_pred: np.ndarray, y_prob: np.ndarray
-    ) -> dict[str, float]:
+    ) -> dict:
         """
-        Calculate all metrics.
+        Calculate all metrics for multi-class classification.
 
         Args:
             y_true: Ground truth labels (N,)
             y_pred: Predicted labels (N,)
-            y_prob: Predicted probabilities for positive class (N,)
+            y_prob: Predicted probabilities/confidence scores (N,) [currently unused]
 
         Returns:
-            Dictionary of metrics
+            Dictionary of metrics (using weighted averaging for multi-class)
         """
-        # Confusion matrix
-        tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+        # Calculate metrics with weighted averaging (accounts for class imbalance)
+        accuracy = float(accuracy_score(y_true, y_pred))
+        precision = float(precision_score(y_true, y_pred, average="weighted", zero_division=0))
+        recall = float(recall_score(y_true, y_pred, average="weighted", zero_division=0))
+        f1 = float(f1_score(y_true, y_pred, average="weighted", zero_division=0))
 
-        # Calculate metrics
-        accuracy = accuracy_score(y_true, y_pred)
-        sensitivity = tp / (tp + fn) if (tp + fn) > 0 else 0.0  # Recall
-        specificity = tn / (tn + fp) if (tn + fp) > 0 else 0.0
-        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-
-        # F1 score
-        if precision + sensitivity > 0:
-            f1 = 2 * (precision * sensitivity) / (precision + sensitivity)
-        else:
-            f1 = 0.0
-
-        # AUC
-        try:
-            auc = roc_auc_score(y_true, y_prob)
-        except ValueError:
-            auc = 0.0
+        # Confusion matrix for reference
+        cm = confusion_matrix(y_true, y_pred)
 
         return {
             "accuracy": accuracy,
-            "sensitivity": sensitivity,  # TPR, Recall
-            "specificity": specificity,  # TNR
             "precision": precision,
+            "recall": recall,
             "f1": f1,
-            "auc": auc,
-            "tp": int(tp),
-            "tn": int(tn),
-            "fp": int(fp),
-            "fn": int(fn),
+            "confusion_matrix": cm,
         }
 
     def print_classification_report(

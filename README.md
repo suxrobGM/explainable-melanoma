@@ -159,17 +159,17 @@ MelanomaNet uses:
 
 - Mixed precision training (AMP)
 - Cosine annealing learning rate scheduler
-- Early stopping
-- Model checkpointing
+- Model checkpointing (last and best F1)
 
 ### Evaluation Metrics
 
+For multi-class classification (weighted averaging):
+
 - Accuracy
-- Sensitivity (Recall)
-- Specificity
 - Precision
+- Recall (Sensitivity)
 - F1 Score
-- AUC-ROC
+- Confusion Matrix
 
 ### ABCDE Clinical Interpretability
 
