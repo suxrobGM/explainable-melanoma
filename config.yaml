@@ -21,12 +21,12 @@ model:
 # Training Configuration
 training:
   batch_size: 32  # Increase to maximize GPU memory usage
-  epochs: 50
+  epochs: 100
   learning_rate: 0.0001
   weight_decay: 0.0001
   optimizer: "adam"
   scheduler: "cosine"  # cosine annealing
-  checkpoint_save_interval: 5  # Save checkpoint every N epochs (0 to disable)
+  checkpoint_save_interval: 10  # Save checkpoint every N epochs (0 to disable)
 
   # Class imbalance handling
   use_class_weights: true

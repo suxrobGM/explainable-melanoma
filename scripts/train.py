@@ -243,7 +243,13 @@ def train(config: dict[str, Any], resume_checkpoint: str | None = None) -> None:
         )
         console.print(f"[bold green]Best F1 so far: {best_val_f1:.4f}[/bold green]\n")
 
-    console.print("\n[bold cyan]Starting training...[/bold cyan]\n")
+    # Display training plan
+    total_epochs = config["training"]["epochs"]
+    epochs_to_train = total_epochs - start_epoch
+    console.print("\n[bold cyan]Starting training...[/bold cyan]")
+    console.print(f"[bold]Total epochs: {total_epochs}[/bold]")
+    console.print(f"[bold]Starting from epoch: {start_epoch + 1}[/bold]")
+    console.print(f"[bold]Epochs to train: {epochs_to_train}[/bold]\n")
 
     for epoch in range(start_epoch, config["training"]["epochs"]):
         # Train
@@ -258,8 +264,11 @@ def train(config: dict[str, Any], resume_checkpoint: str | None = None) -> None:
         if scheduler:
             scheduler.step()
 
-        # Print metrics
-        table = Table(title=f"Epoch {epoch+1} Results")
+        # Print metrics with progress information
+        remaining_epochs = total_epochs - (epoch + 1)
+        table = Table(
+            title=f"Epoch {epoch+1}/{total_epochs} (Remaining: {remaining_epochs})"
+        )
         table.add_column("Metric", style="cyan")
         table.add_column("Value", style="green")
 
