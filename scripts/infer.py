@@ -292,7 +292,7 @@ def run_inference(
     # Save ABCDE report to text file
     if enable_abcde and abcde_result:
         report_path = Path(output_path).with_suffix(".txt")
-        with open(report_path, "w") as f:
+        with open(report_path, "w", encoding="utf-8") as f:
             f.write(create_abcde_report(abcde_result, alignment_scores))
         print(f"ABCDE report saved to {report_path}")
 

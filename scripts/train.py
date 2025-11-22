@@ -25,6 +25,7 @@ import torch.nn as nn
 import yaml
 from rich.console import Console
 from rich.table import Table
+from torch.amp.grad_scaler import GradScaler
 from torch.optim import Adam, AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from tqdm import tqdm
@@ -77,7 +78,7 @@ def train_one_epoch(
 
     # Mixed precision training
     use_amp = config.get("mixed_precision", False)
-    scaler = torch.cuda.amp.GradScaler() if use_amp else None
+    scaler = GradScaler("cuda") if use_amp else None
 
     progress_bar = tqdm(train_loader, desc=f"Epoch {epoch+1} [Train]")
 

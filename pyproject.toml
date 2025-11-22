@@ -34,8 +34,8 @@ dev = [
 
 [tool.pdm.scripts]
 train = "python scripts/train.py --config config.yaml"
-eval = "python scripts/eval.py --checkpoint checkpoints/best_model.pth --config config.yaml"
-infer = "python scripts/infer.py --checkpoint checkpoints/best_model.pth --input image.png --output depth.png --colormap plasma"
+eval = "python scripts/eval.py --config config.yaml --checkpoint checkpoints/best_model.pth"
+infer = "python scripts/infer.py --config config.yaml --checkpoint checkpoints/best_model.pth --input ISIC_0034329.jpg --output outputs/output.png"
 
 
 [tool.pdm]

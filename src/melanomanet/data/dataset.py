@@ -31,7 +31,7 @@ class MelanomaDataset(Dataset):
 
     def __init__(
         self,
-        image_dir: str,
+        image_dir: str | Path,
         labels_df: pd.DataFrame,
         transform: Callable | None = None,
     ):

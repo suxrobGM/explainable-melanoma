@@ -7,7 +7,7 @@ data:
   test_split: 0.15
   num_classes: 2  # Binary: Melanoma vs Benign
   class_names: ["Benign", "Melanoma"]
-  image_size: 224
+  image_size: 224 # Input image size
   num_workers: 4
 
 # Model Configuration

@@ -13,6 +13,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from pytorch_grad_cam import GradCAMPlusPlus
 from pytorch_grad_cam.utils.image import show_cam_on_image
+from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 
 
 class MelanomaGradCAM:
@@ -46,11 +47,7 @@ class MelanomaGradCAM:
         self.target_layers = [target_layer]
 
         # Initialize GradCAM++
-        self.cam = GradCAMPlusPlus(
-            model=model,
-            target_layers=self.target_layers,
-            use_cuda=(device.type == "cuda"),
-        )
+        self.cam = GradCAMPlusPlus(model=model, target_layers=self.target_layers)
 
     def generate_attention_map(
         self, image: torch.Tensor, target_class: int | None = None
@@ -73,7 +70,7 @@ class MelanomaGradCAM:
 
         # Generate CAM
         # target_class=None means use the predicted class
-        targets = None if target_class is None else [target_class]
+        targets = None if target_class is None else [ClassifierOutputTarget(target_class)]
 
         grayscale_cam = self.cam(input_tensor=image, targets=targets)
 
@@ -161,9 +158,9 @@ def denormalize_image(
     img = image.cpu().numpy().transpose(1, 2, 0)
 
     # Denormalize
-    mean = np.array(mean)
-    std = np.array(std)
-    img = img * std + mean
+    mean_np = np.array(mean)
+    std_np = np.array(std)
+    img = img * std_np + mean_np
 
     # Clip to [0, 1]
     img = np.clip(img, 0, 1)
