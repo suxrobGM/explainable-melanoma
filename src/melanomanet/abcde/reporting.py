@@ -1,7 +1,3 @@
-"""
-ABCDE analysis reporting utilities.
-"""
-
 from typing import Any
 
 
@@ -29,14 +25,14 @@ def create_abcde_report(
     # Asymmetry
     asym_score = abcde_result["scores"]["asymmetry"]
     asym_flag = abcde_result["flags"]["asymmetry_flag"]
-    report += f"A - ASYMMETRY: {'⚠ PRESENT' if asym_flag else '✓ Absent'}\n"
+    report += f"A - ASYMMETRY: {'[!] PRESENT' if asym_flag else '[OK] Absent'}\n"
     report += f"    Score: {asym_score:.3f}\n"
     report += f"    Interpretation: {'Lesion shows asymmetry' if asym_flag else 'Lesion appears symmetric'}\n\n"
 
     # Border
     border_score = abcde_result["scores"]["border"]
     border_flag = abcde_result["flags"]["border_flag"]
-    report += f"B - BORDER: {'⚠ IRREGULAR' if border_flag else '✓ Regular'}\n"
+    report += f"B - BORDER: {'[!] IRREGULAR' if border_flag else '[OK] Regular'}\n"
     report += f"    Score: {border_score:.3f}\n"
     report += f"    Interpretation: {'Irregular, poorly defined borders' if border_flag else 'Smooth, well-defined borders'}\n\n"
 
@@ -44,7 +40,7 @@ def create_abcde_report(
     color_score = abcde_result["scores"]["color"]
     num_colors = abcde_result["details"]["num_colors"]
     color_flag = abcde_result["flags"]["color_flag"]
-    report += f"C - COLOR: {'⚠ VARIED' if color_flag else '✓ Uniform'}\n"
+    report += f"C - COLOR: {'[!] VARIED' if color_flag else '[OK] Uniform'}\n"
     report += f"    Distinct colors: {num_colors}\n"
     report += f"    Variation score: {color_score:.3f}\n"
     report += f"    Interpretation: {'Multiple colors present' if color_flag else 'Uniform coloration'}\n\n"
@@ -52,7 +48,7 @@ def create_abcde_report(
     # Diameter
     diameter = abcde_result["scores"]["diameter"]
     diameter_flag = abcde_result["flags"]["diameter_flag"]
-    report += f"D - DIAMETER: {'⚠ LARGE' if diameter_flag else '✓ Small'}\n"
+    report += f"D - DIAMETER: {'[!] LARGE' if diameter_flag else '[OK] Small'}\n"
     report += f"    Diameter: {diameter:.1f} pixels\n"
     report += f"    Interpretation: {'Lesion exceeds size threshold' if diameter_flag else 'Lesion below size threshold'}\n\n"
 

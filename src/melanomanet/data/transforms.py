@@ -1,7 +1,3 @@
-"""
-Data preprocessing and augmentation transforms for dermoscopic images.
-"""
-
 from typing import Any
 
 import torchvision.transforms as T

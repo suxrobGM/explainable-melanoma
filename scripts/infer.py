@@ -230,7 +230,7 @@ def run_inference(
         ax5 = fig.add_subplot(gs[1, 0])
         ax5.imshow(viz["asymmetry"])
         asym_status = (
-            "⚠ PRESENT" if abcde_result["flags"]["asymmetry_flag"] else "✓ Absent"
+            "[!] PRESENT" if abcde_result["flags"]["asymmetry_flag"] else "[OK] Absent"
         )
         ax5.set_title(
             f"A - Asymmetry: {asym_status}\nScore: {abcde_result['scores']['asymmetry']:.3f}",
@@ -241,7 +241,7 @@ def run_inference(
         ax6 = fig.add_subplot(gs[1, 1])
         ax6.imshow(viz["border"])
         border_status = (
-            "⚠ IRREGULAR" if abcde_result["flags"]["border_flag"] else "✓ Regular"
+            "[!] IRREGULAR" if abcde_result["flags"]["border_flag"] else "[OK] Regular"
         )
         ax6.set_title(
             f"B - Border: {border_status}\nScore: {abcde_result['scores']['border']:.3f}",
@@ -252,7 +252,7 @@ def run_inference(
         ax7 = fig.add_subplot(gs[1, 2])
         ax7.imshow(viz["color"])
         color_status = (
-            "⚠ VARIED" if abcde_result["flags"]["color_flag"] else "✓ Uniform"
+            "[!] VARIED" if abcde_result["flags"]["color_flag"] else "[OK] Uniform"
         )
         ax7.set_title(
             f"C - Color: {color_status}\nColors: {abcde_result['details']['num_colors']}",
@@ -262,7 +262,7 @@ def run_inference(
 
         ax8 = fig.add_subplot(gs[1, 3])
         ax8.imshow(viz["diameter"])
-        diam_status = "⚠ LARGE" if abcde_result["flags"]["diameter_flag"] else "✓ Small"
+        diam_status = "[!] LARGE" if abcde_result["flags"]["diameter_flag"] else "[OK] Small"
         ax8.set_title(
             f"D - Diameter: {diam_status}\n{abcde_result['scores']['diameter']:.1f}px",
             fontsize=10,
@@ -279,7 +279,7 @@ def run_inference(
             ("Color", "color_flag"),
             ("Diameter", "diameter_flag"),
         ]:
-            status = "⚠ CONCERN" if abcde_result["flags"][flag_key] else "✓ OK"
+            status = "[!] CONCERN" if abcde_result["flags"][flag_key] else "[OK] OK"
             summary_text += f"{criterion}: {status}\n"
 
         ax9.text(

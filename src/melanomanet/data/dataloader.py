@@ -1,7 +1,3 @@
-"""
-DataLoader factory for creating train/val/test data loaders.
-"""
-
 from pathlib import Path
 from typing import Any
 

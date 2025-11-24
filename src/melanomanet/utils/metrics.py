@@ -1,7 +1,3 @@
-"""
-Evaluation metrics for multi-class skin lesion classification.
-"""
-
 import numpy as np
 from sklearn.metrics import (
     accuracy_score,
@@ -32,8 +28,12 @@ class MetricsTracker:
         """
         # Calculate metrics with weighted averaging (accounts for class imbalance)
         accuracy = float(accuracy_score(y_true, y_pred))
-        precision = float(precision_score(y_true, y_pred, average="weighted", zero_division=0))
-        recall = float(recall_score(y_true, y_pred, average="weighted", zero_division=0))
+        precision = float(
+            precision_score(y_true, y_pred, average="weighted", zero_division=0)
+        )
+        recall = float(
+            recall_score(y_true, y_pred, average="weighted", zero_division=0)
+        )
         f1 = float(f1_score(y_true, y_pred, average="weighted", zero_division=0))
 
         # Confusion matrix for reference

@@ -1,9 +1,3 @@
-"""
-Main ABCDE analyzer class.
-
-Coordinates ABCDE criterion analysis using individual feature analyzers.
-"""
-
 from typing import Any
 
 import numpy as np
@@ -68,9 +62,9 @@ class ABCDEAnalyzer:
 
         # Analyze each criterion
         asymmetry_score, asym_viz = analyze_asymmetry(image, lesion_mask)
-        border_score, border_viz = analyze_border(lesion_mask)
+        border_score, border_viz = analyze_border(lesion_mask, image)
         color_score, num_colors, color_viz = analyze_color(image, lesion_mask)
-        diameter_px, diameter_viz = analyze_diameter(lesion_mask)
+        diameter_px, diameter_viz = analyze_diameter(lesion_mask, image)
 
         # Create result dictionary
         result = {

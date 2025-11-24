@@ -1,10 +1,3 @@
-"""
-MelanomaNet: Explainable melanoma detection model.
-
-Architecture: EfficientNet V2 backbone with custom classification head.
-Supports GradCAM++ for attention visualization.
-"""
-
 import torch
 import torch.nn as nn
 import torchvision.models as tv_models

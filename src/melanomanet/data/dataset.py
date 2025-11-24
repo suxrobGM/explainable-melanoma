@@ -1,8 +1,3 @@
-"""
-Dataset module for skin lesion classification.
-Handles ISIC2019 dataset with preprocessing and augmentation.
-"""
-
 from pathlib import Path
 from typing import Callable
 

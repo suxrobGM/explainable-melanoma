@@ -1,7 +1,3 @@
-"""
-Model checkpoint saving and loading utilities.
-"""
-
 from pathlib import Path
 from typing import Any
 

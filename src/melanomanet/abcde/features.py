@@ -77,7 +77,7 @@ def analyze_asymmetry(image: np.ndarray, mask: np.ndarray) -> tuple[float, np.nd
     return asymmetry_score, viz
 
 
-def analyze_border(mask: np.ndarray) -> tuple[float, np.ndarray]:
+def analyze_border(mask: np.ndarray, image: np.ndarray | None = None) -> tuple[float, np.ndarray]:
     """
     Analyze border irregularity.
 
@@ -85,6 +85,7 @@ def analyze_border(mask: np.ndarray) -> tuple[float, np.ndarray]:
 
     Args:
         mask: Binary lesion mask (H, W)
+        image: Optional RGB image (H, W, 3) for visualization overlay
 
     Returns:
         Tuple of (border_score, visualization)
@@ -94,7 +95,8 @@ def analyze_border(mask: np.ndarray) -> tuple[float, np.ndarray]:
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
     if not contours:
-        return 0.0, cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+        base_viz = image.copy() if image is not None else cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+        return 0.0, base_viz
 
     # Get largest contour
     largest_contour = max(contours, key=cv2.contourArea)
@@ -102,7 +104,8 @@ def analyze_border(mask: np.ndarray) -> tuple[float, np.ndarray]:
     area = cv2.contourArea(largest_contour)
 
     if area == 0:
-        return 0.0, cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+        base_viz = image.copy() if image is not None else cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+        return 0.0, base_viz
 
     # Compactness measure (circularity)
     # Perfect circle = 4π, higher values = more irregular
@@ -124,10 +127,15 @@ def analyze_border(mask: np.ndarray) -> tuple[float, np.ndarray]:
     # Combine scores
     border_score = (border_score + vertex_score) / 2
 
-    # Create visualization
-    viz = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+    # Create visualization - overlay on original image if provided
+    if image is not None:
+        viz = image.copy()
+    else:
+        viz = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+
+    # Draw contours with green (actual) and red (approximated)
     cv2.drawContours(viz, [largest_contour], -1, (0, 255, 0), 2)
-    cv2.drawContours(viz, [approx], -1, (255, 0, 0), 2)
+    cv2.drawContours(viz, [approx], -1, (255, 0, 0), 3)
 
     return border_score, viz
 
@@ -191,7 +199,7 @@ def analyze_color(image: np.ndarray, mask: np.ndarray) -> tuple[float, int, np.n
     return variation_score, int(significant_colors), viz
 
 
-def analyze_diameter(mask: np.ndarray) -> tuple[float, np.ndarray]:
+def analyze_diameter(mask: np.ndarray, image: np.ndarray | None = None) -> tuple[float, np.ndarray]:
     """
     Analyze lesion diameter.
 
@@ -199,6 +207,7 @@ def analyze_diameter(mask: np.ndarray) -> tuple[float, np.ndarray]:
 
     Args:
         mask: Binary lesion mask (H, W)
+        image: Optional RGB image (H, W, 3) for visualization overlay
 
     Returns:
         Tuple of (diameter_in_pixels, visualization)
@@ -207,7 +216,8 @@ def analyze_diameter(mask: np.ndarray) -> tuple[float, np.ndarray]:
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     if not contours:
-        return 0.0, cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+        base_viz = image.copy() if image is not None else cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+        return 0.0, base_viz
 
     # Get largest contour
     largest_contour = max(contours, key=cv2.contourArea)
@@ -223,8 +233,12 @@ def analyze_diameter(mask: np.ndarray) -> tuple[float, np.ndarray]:
     # Use average of both measures
     diameter = (diameter + bbox_diagonal) / 2
 
-    # Create visualization
-    viz = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+    # Create visualization - overlay on original image if provided
+    if image is not None:
+        viz = image.copy()
+    else:
+        viz = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+
     center = (int(x), int(y))
     cv2.circle(viz, center, int(radius), (0, 255, 0), 2)
     cv2.rectangle(
@@ -241,6 +255,6 @@ def analyze_diameter(mask: np.ndarray) -> tuple[float, np.ndarray]:
         int(x + radius * np.cos(angle)),
         int(y + radius * np.sin(angle)),
     )
-    cv2.line(viz, pt1, pt2, (0, 0, 255), 2)
+    cv2.line(viz, pt1, pt2, (0, 0, 255), 3)
 
     return diameter, viz

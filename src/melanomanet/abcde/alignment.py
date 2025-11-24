@@ -1,9 +1,3 @@
-"""
-GradCAM-ABCDE alignment analysis.
-
-Quantifies how well model attention aligns with clinical ABCDE features.
-"""
-
 from typing import Any
 
 import cv2
