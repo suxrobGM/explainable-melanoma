@@ -186,7 +186,6 @@ def train(config: dict[str, Any], resume_checkpoint: str | None = None) -> None:
 
     # Create directories
     Path(config["paths"]["checkpoint_dir"]).mkdir(parents=True, exist_ok=True)
-    Path(config["paths"]["log_dir"]).mkdir(parents=True, exist_ok=True)
 
     # Create data loaders
     console.print("[bold]Loading data...[/bold]")
@@ -265,10 +264,7 @@ def train(config: dict[str, Any], resume_checkpoint: str | None = None) -> None:
             scheduler.step()
 
         # Print metrics with progress information
-        remaining_epochs = total_epochs - (epoch + 1)
-        table = Table(
-            title=f"Epoch {epoch+1}/{total_epochs} (Remaining: {remaining_epochs})"
-        )
+        table = Table(title=f"Epoch {epoch+1}/{total_epochs}")
         table.add_column("Metric", style="cyan")
         table.add_column("Value", style="green")
 

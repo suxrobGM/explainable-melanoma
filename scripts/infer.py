@@ -4,13 +4,23 @@ Inference script with GradCAM++ visualization and ABCDE analysis.
 Args:
     --config: Path to configuration YAML file
     --checkpoint: Path to model checkpoint file
-    --input: Path to input dermoscopic image
-    --output: Path to save visualization
+    --input: Path(s) to input dermoscopic image(s) - can specify multiple times
+    --input-dir: Path to directory containing images to process
 
 Usage:
+    # Single image
     python scripts/infer.py --checkpoint checkpoints/best_model.pth \
                             --input image.jpg \
-                            --output result.png \
+                            --config config.yaml
+
+    # Multiple images
+    python scripts/infer.py --checkpoint checkpoints/best_model.pth \
+                            --input image1.jpg --input image2.jpg \
+                            --config config.yaml
+
+    # Folder of images
+    python scripts/infer.py --checkpoint checkpoints/best_model.pth \
+                            --input-dir ./images \
                             --config config.yaml
 """
 
@@ -33,6 +43,49 @@ from melanomanet.data.transforms import get_val_transforms
 from melanomanet.models.melanomanet import create_model
 from melanomanet.utils.checkpoint import load_checkpoint
 from melanomanet.utils.gradcam import MelanomaGradCAM, denormalize_image
+
+# Supported image formats
+SUPPORTED_FORMATS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
+
+
+def collect_image_paths(input_paths: list[str], input_dir: str) -> List[Path]:
+    """
+    Collect all valid image paths from individual files and/or directory.
+
+    Args:
+        input_paths: List of individual image file paths
+        input_dir: Directory containing images
+
+    Returns:
+        List of valid image file paths
+    """
+    image_paths = []
+
+    # Collect from individual input paths
+    if input_paths:
+        for path_str in input_paths:
+            path = Path(path_str)
+            if path.is_file() and path.suffix.lower() in SUPPORTED_FORMATS:
+                image_paths.append(path)
+            elif not path.exists():
+                print(f"Warning: File not found: {path}")
+            else:
+                print(f"Warning: Unsupported file format: {path}")
+
+    # Collect from input directory
+    if input_dir:
+        dir_path = Path(input_dir)
+        if dir_path.is_dir():
+            for ext in SUPPORTED_FORMATS:
+                image_paths.extend(dir_path.glob(f"*{ext}"))
+                image_paths.extend(dir_path.glob(f"*{ext.upper()}"))
+        else:
+            print(f"Warning: Directory not found: {dir_path}")
+
+    # Remove duplicates and sort
+    image_paths = sorted(set(image_paths))
+
+    return image_paths
 
 
 def run_inference(
@@ -299,17 +352,92 @@ def run_inference(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Run inference with GradCAM++ and ABCDE analysis"
+        description="Run inference with GradCAM++ and ABCDE analysis on single or multiple images"
     )
     parser.add_argument("--config", type=str, required=True, help="Path to config file")
     parser.add_argument(
         "--checkpoint", type=str, required=True, help="Path to checkpoint"
     )
-    parser.add_argument("--input", type=str, required=True, help="Path to input image")
-    parser.add_argument("--output", type=str, required=True, help="Path to save output")
+    parser.add_argument(
+        "--input",
+        type=str,
+        action="append",
+        help="Path to input image(s) - can be specified multiple times",
+    )
+    parser.add_argument(
+        "--input-dir",
+        type=str,
+        help="Directory containing images to process",
+    )
     args = parser.parse_args()
 
-    run_inference(args.config, args.checkpoint, args.input, args.output)
+    # Validate inputs
+    if not args.input and not args.input_dir:
+        parser.error("Either --input or --input-dir must be specified")
+
+    # Load config to get output directory
+    with open(args.config, "r") as f:
+        config = yaml.safe_load(f)
+
+    # Create output directory if it doesn't exist
+    output_dir = Path(config["paths"]["output_dir"])
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Collect all image paths
+    image_paths = collect_image_paths(args.input, args.input_dir)
+
+    if not image_paths:
+        print("Error: No valid images found!")
+        return
+
+    # Process all images
+    print(f"\n{'='*70}")
+    print(f"Found {len(image_paths)} image(s) to process")
+    print(f"Output directory: {output_dir}")
+    print(f"{'='*70}\n")
+
+    results = []
+    for idx, image_path in enumerate(image_paths, 1):
+        print(f"\n[{idx}/{len(image_paths)}] Processing: {image_path.name}")
+        print("-" * 70)
+
+        # Generate output path with unique name
+        output_name = f"{image_path.stem}_result.png"
+        output_path = output_dir / output_name
+
+        try:
+            run_inference(
+                args.config, args.checkpoint, str(image_path), str(output_path)
+            )
+            results.append(
+                {"image": image_path.name, "status": "success", "output": output_path}
+            )
+        except Exception as e:
+            print(f"Error processing {image_path.name}: {e}")
+            results.append(
+                {"image": image_path.name, "status": "failed", "error": str(e)}
+            )
+
+    # Print summary
+    print(f"\n{'='*70}")
+    print("PROCESSING SUMMARY")
+    print(f"{'='*70}")
+    successful = sum(1 for r in results if r["status"] == "success")
+    failed = sum(1 for r in results if r["status"] == "failed")
+
+    print(f"Total images: {len(results)}")
+    print(f"Successful: {successful}")
+    print(f"Failed: {failed}")
+
+    if failed > 0:
+        print("\nFailed images:")
+        for r in results:
+            if r["status"] == "failed":
+                print(f"  - {r['image']}: {r['error']}")
+
+    if successful > 0:
+        print(f"\nAll outputs saved to: {output_dir}")
+    print(f"{'='*70}\n")
 
 
 if __name__ == "__main__":

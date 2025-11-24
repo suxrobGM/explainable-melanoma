@@ -1,5 +1,5 @@
 [project]
-name = "explainable-melanoma-detection"
+name = "explainable-melanoma"
 version = "0.1.0"
 description = "Explainable Melanoma Detection"
 authors = [
@@ -32,9 +32,9 @@ dev = [
 ]
 
 [tool.pdm.scripts]
-train = "python scripts/train.py --config config.yaml"
+train = "python scripts/train.py --config config.yaml --resume checkpoints/checkpoint_epoch_10.pth"
 eval = "python scripts/eval.py --config config.yaml --checkpoint checkpoints/best_model.pth"
-infer = "python scripts/infer.py --config config.yaml --checkpoint checkpoints/best_model.pth --input ISIC_0034329.jpg --output outputs/output.png"
+infer = "python scripts/infer.py --config config.yaml --checkpoint checkpoints/best_model.pth --input-dir data/sample_images"
 
 
 [tool.pdm]

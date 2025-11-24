@@ -80,9 +80,7 @@ abcde:
 # Paths
 paths:
   checkpoint_dir: "./checkpoints"
-  log_dir: "./logs"
   output_dir: "./outputs"
-  attention_maps_dir: "./outputs/attention_maps"
 
 # Miscellaneous
 seed: 25
