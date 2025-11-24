@@ -7,7 +7,7 @@ Explainable deep learning system for multi-class skin lesion classification with
 - **Multi-class skin lesion classification** across all 9 ISIC 2019 diagnostic categories:
   - MEL (Melanoma), NV (Nevus), BCC (Basal cell carcinoma), AK (Actinic keratosis)
   - BKL (Benign keratosis), DF (Dermatofibroma), VASC (Vascular), SCC (Squamous cell carcinoma), UNK (Unknown)
-- **EfficientNet V2 Large** backbone with high-resolution (512x512) input for maximum detail preservation
+- **EfficientNet V2 Medium** backbone with high-resolution (384x384) input for maximum detail preservation
 - Support for EfficientNet V2 architectures (S/M/L)
 - GradCAM++ attention visualization for model explainability
 - **Novel ABCDE criterion analysis with automated feature extraction:**
@@ -15,11 +15,10 @@ Explainable deep learning system for multi-class skin lesion classification with
   - **B**order irregularity measurement
   - **C**olor variation analysis using K-means clustering
   - **D**iameter calculation
-  - **E**volution tracking (future work with temporal data)
+  - **E**volution tracking (not implemented - requires temporal images)
 - **GradCAM-ABCDE alignment metrics** to validate model attention
 - Class imbalance handling (weighted loss, focal loss)
 - Comprehensive clinical interpretability reports
-- Production-ready inference pipeline with checkpoint resumption
 
 ## Installation
 
@@ -90,89 +89,90 @@ Edit [config.yaml](config.yaml) to customize:
 
 - Dataset path and splits
 - **Model architecture**: Choose from `efficientnet_v2_s`, `efficientnet_v2_m`, `efficientnet_v2_l`
-- **Input resolution**: Default 512x512 for high-detail medical imaging (configurable: 224, 384, 480, 512, 640)
-- Training hyperparameters (batch size optimized for 512x512 on 16GB GPU)
+- **Input resolution**: Default 384x384 for high-detail medical imaging (configurable: 224, 384, 480, 512, 640)
+- Training hyperparameters (batch size optimized for available GPU memory)
 - Augmentation settings
 - GradCAM parameters
 - ABCDE analysis thresholds (automatically scaled with image resolution)
 
 ## Model Architecture
 
-MelanomaNet uses:
+![MelanomaNet Architecture](docs/images/architecture.jpg)
 
-- **Backbone**: EfficientNet V2 Large (default, 119M params, 1280 features)
-  - Also supports: V2-S (22M params), V2-M (54M params)
-- **Input Resolution**: 512x512 RGB images (4.5x more pixels than standard 224x224)
+MelanomaNet consists of three main components:
+
+### 1. Feature Extraction (EfficientNet V2-M Backbone)
+
+- **Backbone**: EfficientNet V2 Medium (54M params, 1280 features)
+  - Also supports: V2-S (22M params), V2-L (119M params)
+- **Input Resolution**: 384×384 RGB images (3x more pixels than standard 224×224)
 - **Pretrained**: ImageNet-1K weights for transfer learning
-- **Classifier Head**: Global average pooling + dropout (0.3) + linear layer
-- **Explainability**: GradCAM++ for attention visualization
+- **Architecture**: 7 MBConv (Mobile Inverted Bottleneck Convolution) stages with progressive feature extraction
 
-### Data Augmentation
+### 2. Classification Head
 
-- Geometric: horizontal/vertical flips, rotation, affine transforms
-- Color: brightness, contrast, saturation, hue adjustments
-- Normalization: ImageNet statistics
+- **Global Average Pooling**: Reduces spatial dimensions (12×12×1280 → 1280)
+- **Dropout**: 0.3 regularization to prevent overfitting
+- **Linear Classifier**: 1280 → 9 classes with softmax activation
+- **Output**: Probabilities for MEL, NV, BCC, AK, BKL, DF, VASC, SCC, UNK
 
-### Class Imbalance Handling
+### 3. Explainability & Interpretability
 
-- Weighted cross-entropy loss
-- Optional focal loss
-- Stratified train/val/test split
+- **GradCAM++**: Attention visualization showing which image regions influenced the prediction
+- **ABCDE Analysis**: Clinical criterion extraction (Asymmetry, Border, Color, Diameter)
+- **Alignment Metrics**: Validates that model attention aligns with clinical features
 
-### Training Features
+### Training Configuration
 
-- Mixed precision training (AMP)
-- Cosine annealing learning rate scheduler
-- Model checkpointing (last and best F1)
-
-### Evaluation Metrics
-
-For multi-class classification (weighted averaging):
-
-- Accuracy
-- Precision
-- Recall (Sensitivity)
-- F1 Score
-- Confusion Matrix
+- **Data Augmentation**: Geometric transforms (flips, rotation, affine) + color jittering (brightness, contrast, saturation, hue) + ImageNet normalization
+- **Class Imbalance**: Weighted cross-entropy loss with optional focal loss; stratified train/val/test split
+- **Optimization**: Mixed precision training (AMP), cosine annealing LR scheduler, AdamW optimizer
+- **Checkpointing**: Saves best model by F1 score and last epoch for resumption
+- **Metrics**: Accuracy, weighted precision/recall/F1, per-class classification reports, confusion matrices
 
 ### ABCDE Clinical Interpretability
 
-Automated extraction and analysis of clinical ABCDE features:
+The system provides automated extraction and quantification of clinical ABCDE criteria for melanoma detection:
 
-**Asymmetry (A):**
+- **Asymmetry (A)**: Quantifies lesion symmetry along horizontal/vertical axes (score 0-1)
+- **Border (B)**: Measures contour irregularity and compactness
+- **Color (C)**: Identifies distinct colors using K-means clustering
+- **Diameter (D)**: Calculates maximum lesion diameter in pixels
+- **Evolution (E)**: Not implemented - requires temporal images
+- **GradCAM Alignment**: Validates that model attention aligns with clinical ABCDE features
 
-- Compares lesion halves along horizontal and vertical axes
-- Quantifies asymmetry score (0-1)
-- Highlights symmetry axes
+## Results
 
-**Border (B):**
+Sample inference results demonstrating GradCAM++ attention visualization and ABCDE clinical analysis:
 
-- Analyzes contour irregularity
-- Measures compactness and vertex count
-- Detects poorly defined borders
+### Sample 1: ISIC_0034335
 
-**Color (C):**
+![ISIC_0034335 Result](docs/images/ISIC_0034335_result.png)
 
-- K-means clustering to identify distinct colors
-- Counts significant color variations
-- Generates color palette visualization
+### Sample 2: ISIC_0034338
 
-**Diameter (D):**
+![ISIC_0034338 Result](docs/images/ISIC_0034338_result.png)
 
-- Calculates maximum lesion diameter
-- Uses minimum enclosing circle and bounding box
-- Compares against clinical threshold
+### Sample 3: ISIC_0034376
 
-**Evolution (E):**
+![ISIC_0034376 Result](docs/images/ISIC_0034376_result.png)
 
-- Framework for temporal change analysis
-- Requires multi-timepoint imaging (future work)
+### Sample 4: ISIC_0034390
 
-**GradCAM Alignment:**
+![ISIC_0034390 Result](docs/images/ISIC_0034390_result.png)
 
-- Quantifies how well model attention aligns with ABCDE features
-- Provides border, color, and overall alignment scores
-- Validates clinical interpretability of model focus
+### Sample 5: ISIC_0034500
+
+![ISIC_0034500 Result](docs/images/ISIC_0034500_result.png)
+
+Each result shows:
+
+- Original dermoscopic image
+- GradCAM++ attention heatmap highlighting regions of interest
+- Overlay visualization with prediction and confidence
+- ABCDE risk assessment (Low/Medium/High)
+- Individual ABCDE criterion analysis with visualizations
+- GradCAM-ABCDE alignment metrics
 
 ## Citation
 
