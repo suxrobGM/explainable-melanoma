@@ -27,7 +27,7 @@ Explainable deep learning system for multi-class skin lesion classification with
 pdm install
 
 # If PDM is not installed then install it via pip:
-pip install pdm
+pip install --user pdm
 ```
 
 ## Dataset Preparation
