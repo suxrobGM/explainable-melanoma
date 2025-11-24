@@ -124,32 +124,25 @@ def evaluate(config_path: str, checkpoint_path: str) -> None:
 
             all_preds.extend(preds.cpu().numpy())
             all_labels.extend(labels.cpu().numpy())
-            all_probs.extend(probs[:, 1].cpu().numpy())
+            all_probs.append(probs.cpu().numpy())
 
     # Calculate metrics
     y_true = np.array(all_labels)
     y_pred = np.array(all_preds)
-    y_prob = np.array(all_probs)
 
     metrics_tracker = MetricsTracker()
-    metrics = metrics_tracker.calculate_metrics(y_true, y_pred, y_prob)
+    # Pass dummy array for y_prob since it's not used in multi-class metrics
+    metrics = metrics_tracker.calculate_metrics(y_true, y_pred)
 
     # Print results
-    table = Table(title="Test Set Results")
+    table = Table(title="Test Set Results (Multi-class)")
     table.add_column("Metric", style="cyan")
     table.add_column("Value", style="green")
 
     table.add_row("Accuracy", f"{metrics['accuracy']:.4f}")
-    table.add_row("Sensitivity (Recall)", f"{metrics['sensitivity']:.4f}")
-    table.add_row("Specificity", f"{metrics['specificity']:.4f}")
-    table.add_row("Precision", f"{metrics['precision']:.4f}")
-    table.add_row("F1 Score", f"{metrics['f1']:.4f}")
-    table.add_row("AUC-ROC", f"{metrics['auc']:.4f}")
-    table.add_row("", "")
-    table.add_row("True Positives", str(metrics["tp"]))
-    table.add_row("True Negatives", str(metrics["tn"]))
-    table.add_row("False Positives", str(metrics["fp"]))
-    table.add_row("False Negatives", str(metrics["fn"]))
+    table.add_row("Precision (weighted)", f"{metrics['precision']:.4f}")
+    table.add_row("Recall (weighted)", f"{metrics['recall']:.4f}")
+    table.add_row("F1 Score (weighted)", f"{metrics['f1']:.4f}")
 
     console.print(table)
     console.print()
@@ -171,8 +164,6 @@ def evaluate(config_path: str, checkpoint_path: str) -> None:
             config["data"]["class_names"],
             output_dir / "confusion_matrix.png",
         )
-
-    plot_roc_curve(y_true, y_prob, output_dir / "roc_curve.png", metrics["auc"])
 
     console.print("\n[bold green]Evaluation complete![/bold green]")
 

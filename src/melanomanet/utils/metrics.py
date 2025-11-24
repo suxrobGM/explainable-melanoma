@@ -12,9 +12,7 @@ from sklearn.metrics import (
 class MetricsTracker:
     """Calculate and track evaluation metrics for multi-class classification."""
 
-    def calculate_metrics(
-        self, y_true: np.ndarray, y_pred: np.ndarray, y_prob: np.ndarray
-    ) -> dict:
+    def calculate_metrics(self, y_true: np.ndarray, y_pred: np.ndarray) -> dict:
         """
         Calculate all metrics for multi-class classification.
 
@@ -53,4 +51,20 @@ class MetricsTracker:
         """Print detailed classification report."""
         print("\nClassification Report:")
         print("=" * 60)
-        print(classification_report(y_true, y_pred, target_names=class_names, digits=4))
+
+        # Get unique labels present in the data
+        unique_labels = sorted(np.unique(np.concatenate([y_true, y_pred])))
+
+        # Filter class names to only include present classes
+        present_class_names = [class_names[i] for i in unique_labels]
+
+        print(
+            classification_report(
+                y_true,
+                y_pred,
+                labels=unique_labels,
+                target_names=present_class_names,
+                digits=4,
+                zero_division=0,
+            )
+        )
