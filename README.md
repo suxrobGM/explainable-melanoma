@@ -22,6 +22,15 @@ Explainable deep learning system for multi-class skin lesion classification with
 
 ## Installation
 
+### Requirements
+
+- Python 3.14+
+- PyTorch 2.9+
+- PDM for dependency management
+- CUDA-compatible GPU (optional, for training/inference acceleration)
+
+### Setup
+
 ```bash
 # Install dependencies
 pdm install
@@ -90,7 +99,7 @@ Edit [config.yaml](config.yaml) to customize:
 - Dataset path and splits
 - **Model architecture**: Choose from `efficientnet_v2_s`, `efficientnet_v2_m`, `efficientnet_v2_l`
 - **Input resolution**: Default 384x384 for high-detail medical imaging (configurable: 224, 384, 480, 512, 640)
-- Training hyperparameters (batch size optimized for available GPU memory)
+- Training hyperparameters
 - Augmentation settings
 - GradCAM parameters
 - ABCDE analysis thresholds (automatically scaled with image resolution)
