@@ -7,7 +7,6 @@ import numpy as np
 def analyze_gradcam_alignment(
     abcde_result: dict[str, Any],
     attention_map: np.ndarray,
-    image: np.ndarray,
 ) -> dict[str, float]:
     """
     Analyze alignment between GradCAM attention and ABCDE features.
@@ -18,7 +17,6 @@ def analyze_gradcam_alignment(
     Args:
         abcde_result: Result from ABCDEAnalyzer.analyze_image()
         attention_map: GradCAM attention heatmap (H, W) normalized [0, 1]
-        image: Original RGB image (H, W, 3)
 
     Returns:
         Dictionary of alignment scores for each criterion

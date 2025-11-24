@@ -54,7 +54,6 @@ evaluation:
 # GradCAM Configuration
 gradcam:
   target_layer: "auto"  # Auto-detected based on backbone architecture
-  use_gradcam_pp: true  # Use GradCAM++ instead of GradCAM
 
 # ABCDE Criterion Analysis Configuration
 abcde:

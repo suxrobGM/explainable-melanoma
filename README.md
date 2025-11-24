@@ -27,8 +27,8 @@ Explainable deep learning system for multi-class skin lesion classification with
 # Install dependencies
 pdm install
 
-# Or with pip (if you have requirements.txt)
-pip install -e .
+# If PDM is not installed then install it via pip:
+pip install pdm
 ```
 
 ## Dataset Preparation
@@ -71,7 +71,6 @@ pdm run eval
 # Run inference
 python scripts/infer.py --checkpoint checkpoints/best_model.pth \
                         --input path/to/image.jpg \
-                        --output result.png \
                         --config config.yaml
 ```
 
@@ -83,41 +82,6 @@ python scripts/train.py --config config.yaml --resume ./checkpoints/last_checkpo
 
 # Resume from specific epoch
 python scripts/train.py --config config.yaml --resume ./checkpoints/checkpoint_epoch_10.pth
-```
-
-## Project Structure
-
-```text
-explainable-melanoma/
-├── data/                      # Data directory
-│   └── isic_2019/            # ISIC 2019 dataset
-├── checkpoints/              # Model checkpoints
-├── outputs/                  # Results and visualizations
-├── scripts/
-│   ├── train.py             # Training script
-│   ├── eval.py              # Evaluation script
-│   └── infer.py             # Inference script
-├── src/melanomanet/
-│   ├── data/
-│   │   ├── dataset.py       # Dataset class
-│   │   ├── dataloader.py    # Data loading
-│   │   └── transforms.py    # Preprocessing
-│   ├── models/
-│   │   ├── melanomanet.py   # Model architecture
-│   │   └── losses.py        # Loss functions
-│   ├── abcde/              # ABCDE criterion analysis module
-│   │   ├── analyzer.py      # Main ABCDEAnalyzer class
-│   │   ├── features.py      # Individual feature analyzers
-│   │   ├── segmentation.py  # Lesion segmentation
-│   │   ├── alignment.py     # GradCAM alignment
-│   │   └── reporting.py     # Report generation
-│   └── utils/
-│       ├── metrics.py       # Evaluation metrics
-│       ├── checkpoint.py    # Model saving/loading
-│       └── gradcam.py       # GradCAM++ implementation
-├── config.yaml              # Configuration file
-├── pyproject.toml           # Project dependencies
-└── README.md
 ```
 
 ## Configuration

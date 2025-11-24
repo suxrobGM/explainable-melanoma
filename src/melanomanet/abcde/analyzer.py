@@ -15,11 +15,10 @@ class ABCDEAnalyzer:
     quantitative scores for each ABCDE criterion.
 
     Args:
-        asymmetry_threshold: Threshold for asymmetry score (0-1)
-        border_threshold: Threshold for border irregularity (0-1)
-        color_threshold: Number of distinct colors indicating concern
-        diameter_threshold_px: Diameter threshold in pixels
-        image_size: Size of input images for calibration
+        asymmetry_threshold: Threshold for asymmetry score (0-1). Default is 0.3.
+        border_threshold: Threshold for border irregularity (0-1). Default is 0.4.
+        color_threshold: Number of distinct colors indicating concern. Default is 3.
+        diameter_threshold_px: Diameter threshold in pixels. Default is 50px.
     """
 
     def __init__(
@@ -28,13 +27,11 @@ class ABCDEAnalyzer:
         border_threshold: float = 0.4,
         color_threshold: int = 3,
         diameter_threshold_px: int = 50,
-        image_size: int = 224,
     ):
         self.asymmetry_threshold = asymmetry_threshold
         self.border_threshold = border_threshold
         self.color_threshold = color_threshold
         self.diameter_threshold_px = diameter_threshold_px
-        self.image_size = image_size
 
     def analyze_image(
         self, image: np.ndarray, return_visualizations: bool = False
@@ -154,7 +151,6 @@ class ABCDEAnalyzer:
         self,
         abcde_result: dict[str, Any],
         attention_map: np.ndarray,
-        image: np.ndarray,
     ) -> dict[str, float]:
         """
         Analyze alignment between GradCAM attention and ABCDE features.
@@ -162,9 +158,8 @@ class ABCDEAnalyzer:
         Args:
             abcde_result: Result from analyze_image()
             attention_map: GradCAM attention heatmap (H, W) normalized [0, 1]
-            image: Original RGB image
 
         Returns:
             Dictionary of alignment scores for each criterion
         """
-        return analyze_gradcam_alignment(abcde_result, attention_map, image)
+        return analyze_gradcam_alignment(abcde_result, attention_map)

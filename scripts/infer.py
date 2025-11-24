@@ -42,13 +42,13 @@ from melanomanet.abcde import ABCDEAnalyzer, create_abcde_report
 from melanomanet.data.transforms import get_val_transforms
 from melanomanet.models.melanomanet import create_model
 from melanomanet.utils.checkpoint import load_checkpoint
-from melanomanet.utils.gradcam import MelanomaGradCAM, denormalize_image
+from melanomanet.utils.gradcam import MelanomaGradCAM
 
 # Supported image formats
 SUPPORTED_FORMATS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
 
 
-def collect_image_paths(input_paths: list[str], input_dir: str) -> List[Path]:
+def collect_image_paths(input_paths: list[str], input_dir: str) -> list[Path]:
     """
     Collect all valid image paths from individual files and/or directory.
 
@@ -122,8 +122,9 @@ def run_inference(
     print(f"Loading image from {image_path}...")
     original_image = Image.open(image_path).convert("RGB")
 
-    # Resize for visualization
-    original_image_np = np.array(original_image.resize((224, 224))) / 255.0
+    # Resize for visualization using configured image size
+    img_size = config["data"]["image_size"]
+    original_image_np = np.array(original_image.resize((img_size, img_size))) / 255.0
 
     # Transform for model
     transform = get_val_transforms(config)
@@ -165,9 +166,7 @@ def run_inference(
 
         # Analyze GradCAM-ABCDE alignment
         if abcde_config.get("enable_alignment_analysis", True):
-            alignment_scores = analyzer.align_with_gradcam(
-                abcde_result, attention_map, image_uint8
-            )
+            alignment_scores = analyzer.align_with_gradcam(abcde_result, attention_map)
 
         # Print ABCDE report
         report = create_abcde_report(abcde_result, alignment_scores)
@@ -262,7 +261,9 @@ def run_inference(
 
         ax8 = fig.add_subplot(gs[1, 3])
         ax8.imshow(viz["diameter"])
-        diam_status = "[!] LARGE" if abcde_result["flags"]["diameter_flag"] else "[OK] Small"
+        diam_status = (
+            "[!] LARGE" if abcde_result["flags"]["diameter_flag"] else "[OK] Small"
+        )
         ax8.set_title(
             f"D - Diameter: {diam_status}\n{abcde_result['scores']['diameter']:.1f}px",
             fontsize=10,
