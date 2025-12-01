@@ -48,12 +48,9 @@ from melanomanet.abcde import ABCDEAnalyzer, create_abcde_report
 from melanomanet.data.transforms import get_val_transforms
 from melanomanet.explainability import FastCAV, create_fastcav_report
 from melanomanet.models.melanomanet import create_model
+from melanomanet.uncertainty import MCDropoutEstimator, get_uncertainty_interpretation
 from melanomanet.utils.checkpoint import load_checkpoint
 from melanomanet.utils.gradcam import MelanomaGradCAM
-from melanomanet.utils.uncertainty import (
-    MCDropoutEstimator,
-    get_uncertainty_interpretation,
-)
 
 # Supported image formats
 SUPPORTED_FORMATS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
