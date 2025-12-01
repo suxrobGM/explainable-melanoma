@@ -1,6 +1,6 @@
 # MelanomaNet: Explainable Skin Lesion Classification
 
-Explainable deep learning system for multi-class skin lesion classification with ABCDE criterion validation using attention-based visualization (GradCAM++).
+Explainable deep learning system for multi-class skin lesion classification with comprehensive interpretability features including ABCDE criterion validation, concept-based explanations (FastCAV), and uncertainty quantification.
 
 ## Features
 
@@ -17,6 +17,8 @@ Explainable deep learning system for multi-class skin lesion classification with
   - **D**iameter calculation
   - **E**volution tracking (not implemented - requires temporal images)
 - **GradCAM-ABCDE alignment metrics** to validate model attention
+- **FastCAV (Fast Concept Activation Vectors)** for concept-based model interpretability
+- **MC Dropout Uncertainty Quantification** with epistemic/aleatoric decomposition
 - Class imbalance handling (weighted loss, focal loss)
 - Comprehensive clinical interpretability reports
 
@@ -76,10 +78,44 @@ pdm run eval
 ### Inference
 
 ```bash
-# Run inference
+# Run inference on a single image
+pdm run infer
+# Or: python scripts/infer.py --checkpoint checkpoints/best_model.pth \
+#                             --input path/to/image.jpg \
+#                             --config config.yaml
+
+# Run inference on a directory of images
 python scripts/infer.py --checkpoint checkpoints/best_model.pth \
-                        --input path/to/image.jpg \
+                        --input-dir path/to/images/ \
                         --config config.yaml
+```
+
+### FastCAV Concept Training
+
+Train concept activation vectors for concept-based explainability:
+
+```bash
+# First, generate concept images (requires manual curation)
+pdm run generate-concepts
+
+# Train FastCAV on concept images
+pdm run train-fastcav
+# Or: python scripts/train_fastcav.py --config config.yaml --checkpoint checkpoints/best_model.pth
+```
+
+Concept images should be organized as:
+
+```text
+data/concepts/
+├── irregular_border/
+│   ├── positive/    # Images with irregular borders
+│   └── negative/    # Images with regular borders
+├── asymmetry/
+│   ├── positive/
+│   └── negative/
+└── color_variation/
+    ├── positive/
+    └── negative/
 ```
 
 ### Resume Training from Checkpoint
@@ -103,6 +139,8 @@ Edit [config.yaml](config.yaml) to customize:
 - Augmentation settings
 - GradCAM parameters
 - ABCDE analysis thresholds (automatically scaled with image resolution)
+- **Uncertainty settings**: MC Dropout samples, uncertainty threshold for reliability
+- **FastCAV settings**: Concepts directory, CAVs checkpoint path, enable/disable
 
 ## Model Architecture
 
@@ -130,6 +168,28 @@ MelanomaNet consists of three main components:
 - **GradCAM++**: Attention visualization showing which image regions influenced the prediction
 - **ABCDE Analysis**: Clinical criterion extraction (Asymmetry, Border, Color, Diameter)
 - **Alignment Metrics**: Validates that model attention aligns with clinical features
+- **FastCAV (Fast Concept Activation Vectors)**: Concept-based explanations using learned concept directions
+- **MC Dropout Uncertainty**: Predictive uncertainty decomposition into epistemic and aleatoric components
+
+### 4. Uncertainty Quantification
+
+MC Dropout-based uncertainty estimation provides:
+
+- **Predictive Uncertainty**: Total model uncertainty combining all sources
+- **Epistemic Uncertainty**: Model knowledge gaps (reducible with more training data)
+- **Aleatoric Uncertainty**: Inherent data noise (irreducible uncertainty)
+- **Reliability Assessment**: Automatic flagging of uncertain predictions for clinical review
+
+### 5. FastCAV Concept-Based Explainability
+
+FastCAV (Fast Concept Activation Vectors) provides human-interpretable explanations:
+
+- **Concept Vectors**: Learn directions in feature space corresponding to clinical concepts (e.g., irregular borders, asymmetry, color variation)
+- **TCAV Scores**: Measure how strongly each concept influences the model's prediction
+  - Positive scores (+) indicate the concept supports the prediction
+  - Negative scores (-) indicate the concept opposes the prediction
+  - Higher magnitude indicates stronger influence
+- **Concept Accuracy**: Validates that learned concepts are meaningful (>60% classifier accuracy)
 
 ### Training Configuration
 
@@ -182,6 +242,8 @@ Each result shows:
 - ABCDE risk assessment (Low/Medium/High)
 - Individual ABCDE criterion analysis with visualizations
 - GradCAM-ABCDE alignment metrics
+- Uncertainty analysis panel (predictive, epistemic, aleatoric uncertainty with reliability assessment)
+- FastCAV concept importance scores (when CAVs are trained)
 
 ## Citation
 
