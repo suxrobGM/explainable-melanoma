@@ -1,8 +1,11 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import tqdm
+from rich.console import Console
+from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn
 from torch.utils.data import DataLoader
+
+console = Console()
 
 
 class TemperatureScaling:
@@ -52,11 +55,20 @@ class TemperatureScaling:
         all_labels = []
 
         with torch.no_grad():
-            for images, labels, _ in tqdm(val_loader, desc="Collecting logits"):
-                images = images.to(self.device)
-                logits = self.model(images)
-                all_logits.append(logits)
-                all_labels.append(labels)
+            with Progress(
+                TextColumn("[cyan]Collecting logits"),
+                BarColumn(),
+                TaskProgressColumn(),
+                console=console,
+            ) as progress:
+                task = progress.add_task("Collecting", total=len(val_loader))
+
+                for images, labels, _ in val_loader:
+                    images = images.to(self.device)
+                    logits = self.model(images)
+                    all_logits.append(logits)
+                    all_labels.append(labels)
+                    progress.update(task, advance=1)
 
         logits = torch.cat(all_logits, dim=0)
         labels = torch.cat(all_labels, dim=0).to(self.device)

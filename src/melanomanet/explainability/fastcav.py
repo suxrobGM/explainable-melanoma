@@ -10,15 +10,18 @@ from typing import Any
 
 import numpy as np
 import torch
+from rich.console import Console
+from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn
 from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 from ..models.melanomanet import MelanomaNet
 from .dataset import ConceptDataset
 from .models import ConceptScore, FastCAVResult
+
+console = Console()
 
 
 class FastCAV:
@@ -84,11 +87,20 @@ class FastCAV:
         all_labels = []
 
         with torch.no_grad():
-            for images, labels in tqdm(dataloader, desc="Extracting features"):
-                images = images.to(self.device)
-                features = self.model.get_features(images)
-                all_features.append(features.cpu().numpy())
-                all_labels.append(labels.numpy())
+            with Progress(
+                TextColumn("[cyan]Extracting features"),
+                BarColumn(),
+                TaskProgressColumn(),
+                console=console,
+            ) as progress:
+                task = progress.add_task("Extracting", total=len(dataloader))
+
+                for images, labels in dataloader:
+                    images = images.to(self.device)
+                    features = self.model.get_features(images)
+                    all_features.append(features.cpu().numpy())
+                    all_labels.append(labels.numpy())
+                    progress.update(task, advance=1)
 
         return np.vstack(all_features), np.concatenate(all_labels)
 
@@ -178,14 +190,24 @@ class FastCAV:
             Dictionary mapping concept names to accuracies
         """
         accuracies = {}
-        for concept_name in tqdm(self.available_concepts, desc="Training CAVs"):
-            try:
-                _, accuracy = self.train_cav(concept_name, transform, batch_size)
-                accuracies[concept_name] = accuracy
-                print(f"  {concept_name}: accuracy = {accuracy:.3f}")
-            except Exception as e:
-                print(f"  {concept_name}: FAILED - {e}")
-                accuracies[concept_name] = 0.0
+        with Progress(
+            TextColumn("[bold green]Training CAVs"),
+            BarColumn(),
+            TaskProgressColumn(),
+            console=console,
+        ) as progress:
+            task = progress.add_task("Training", total=len(self.available_concepts))
+
+            for concept_name in self.available_concepts:
+                try:
+                    _, accuracy = self.train_cav(concept_name, transform, batch_size)
+                    accuracies[concept_name] = accuracy
+                    console.print(f"  {concept_name}: accuracy = {accuracy:.3f}")
+                except Exception as e:
+                    console.print(f"  [red]{concept_name}: FAILED - {e}[/red]")
+                    accuracies[concept_name] = 0.0
+
+                progress.update(task, advance=1)
 
         return accuracies
 

@@ -23,9 +23,9 @@ import seaborn as sns
 import torch
 import yaml
 from rich.console import Console
+from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn
 from rich.table import Table
 from sklearn.metrics import confusion_matrix, roc_curve
-from tqdm import tqdm
 
 from melanomanet.data.dataloader import create_data_loaders
 from melanomanet.models.melanomanet import create_model
@@ -114,17 +114,28 @@ def evaluate(config_path: str, checkpoint_path: str) -> None:
     all_probs = []
 
     with torch.no_grad():
-        for images, labels, _ in tqdm(test_loader, desc="Testing"):
-            images = images.to(device)
-            labels = labels.to(device)
+        with Progress(
+            TextColumn("[bold cyan]Testing"),
+            BarColumn(),
+            TaskProgressColumn(),
+            TimeRemainingColumn(),
+            console=console,
+        ) as progress:
+            task = progress.add_task("Testing", total=len(test_loader))
 
-            outputs = model(images)
-            probs = torch.softmax(outputs, dim=1)
-            preds = torch.argmax(outputs, dim=1)
+            for images, labels, _ in test_loader:
+                images = images.to(device)
+                labels = labels.to(device)
 
-            all_preds.extend(preds.cpu().numpy())
-            all_labels.extend(labels.cpu().numpy())
-            all_probs.append(probs.cpu().numpy())
+                outputs = model(images)
+                probs = torch.softmax(outputs, dim=1)
+                preds = torch.argmax(outputs, dim=1)
+
+                all_preds.extend(preds.cpu().numpy())
+                all_labels.extend(labels.cpu().numpy())
+                all_probs.append(probs.cpu().numpy())
+
+                progress.update(task, advance=1)
 
     # Calculate metrics
     y_true = np.array(all_labels)

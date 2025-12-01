@@ -24,11 +24,11 @@ import torch
 import torch.nn as nn
 import yaml
 from rich.console import Console
+from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn
 from rich.table import Table
 from torch.amp.grad_scaler import GradScaler
 from torch.optim import Adam, AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
-from tqdm import tqdm
 
 from melanomanet.data.dataloader import create_data_loaders
 from melanomanet.models.losses import create_criterion
@@ -80,34 +80,42 @@ def train_one_epoch(
     use_amp = config.get("mixed_precision", False)
     scaler = GradScaler("cuda") if use_amp else None
 
-    progress_bar = tqdm(train_loader, desc=f"Epoch {epoch+1} [Train]")
+    with Progress(
+        TextColumn("[bold blue]Epoch {task.fields[epoch]} [Train]"),
+        BarColumn(),
+        TaskProgressColumn(),
+        TextColumn("loss: {task.fields[loss]:.4f}"),
+        TimeRemainingColumn(),
+        console=console,
+    ) as progress:
+        task = progress.add_task(
+            "Training", total=len(train_loader), epoch=epoch + 1, loss=0.0
+        )
 
-    for batch_idx, (images, labels, _) in enumerate(progress_bar):
-        images = images.to(device, non_blocking=True)
-        labels = labels.to(device, non_blocking=True)
+        for images, labels, _ in train_loader:
+            images = images.to(device, non_blocking=True)
+            labels = labels.to(device, non_blocking=True)
 
-        optimizer.zero_grad()
+            optimizer.zero_grad()
 
-        # Forward pass with mixed precision
-        if use_amp and scaler is not None:
-            with torch.amp.autocast_mode.autocast("cuda"):
+            # Forward pass with mixed precision
+            if use_amp and scaler is not None:
+                with torch.amp.autocast_mode.autocast("cuda"):
+                    outputs = model(images)
+                    loss = criterion(outputs, labels)
+
+                # Backward pass
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
+            else:
                 outputs = model(images)
                 loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
 
-            # Backward pass
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
-        else:
-            outputs = model(images)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
-
-        total_loss += loss.item()
-
-        # Update progress bar
-        progress_bar.set_postfix({"loss": f"{loss.item():.4f}"})
+            total_loss += loss.item()
+            progress.update(task, advance=1, loss=loss.item())
 
     avg_loss = total_loss / len(train_loader)
     return avg_loss
@@ -141,24 +149,35 @@ def validate(
     all_probs = []
 
     with torch.no_grad():
-        progress_bar = tqdm(val_loader, desc=f"Epoch {epoch+1} [Val]")
+        with Progress(
+            TextColumn("[bold cyan]Epoch {task.fields[epoch]} [Val]"),
+            BarColumn(),
+            TaskProgressColumn(),
+            TimeRemainingColumn(),
+            console=console,
+        ) as progress:
+            task = progress.add_task(
+                "Validating", total=len(val_loader), epoch=epoch + 1
+            )
 
-        for images, labels, _ in progress_bar:
-            images = images.to(device, non_blocking=True)
-            labels = labels.to(device, non_blocking=True)
+            for images, labels, _ in val_loader:
+                images = images.to(device, non_blocking=True)
+                labels = labels.to(device, non_blocking=True)
 
-            outputs = model(images)
-            loss = criterion(outputs, labels)
+                outputs = model(images)
+                loss = criterion(outputs, labels)
 
-            total_loss += loss.item()
+                total_loss += loss.item()
 
-            # Get predictions
-            probs = torch.softmax(outputs, dim=1)
-            preds = torch.argmax(outputs, dim=1)
+                # Get predictions
+                probs = torch.softmax(outputs, dim=1)
+                preds = torch.argmax(outputs, dim=1)
 
-            all_preds.extend(preds.cpu().numpy())
-            all_labels.extend(labels.cpu().numpy())
-            all_probs.extend(probs[:, 1].cpu().numpy())  # Melanoma probability
+                all_preds.extend(preds.cpu().numpy())
+                all_labels.extend(labels.cpu().numpy())
+                all_probs.extend(probs[:, 1].cpu().numpy())  # Melanoma probability
+
+                progress.update(task, advance=1)
 
     # Calculate metrics
     metrics_tracker = MetricsTracker()
