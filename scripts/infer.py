@@ -1,5 +1,11 @@
 """
-Inference script with GradCAM++ visualization and ABCDE analysis.
+Inference script with comprehensive explainability features.
+
+Features:
+- GradCAM++ attention visualization
+- ABCDE criterion analysis
+- MC Dropout uncertainty quantification
+- FastCAV concept-based explanations
 
 Args:
     --config: Path to configuration YAML file
@@ -40,9 +46,14 @@ from PIL import Image
 
 from melanomanet.abcde import ABCDEAnalyzer, create_abcde_report
 from melanomanet.data.transforms import get_val_transforms
+from melanomanet.explainability import FastCAV, create_fastcav_report
 from melanomanet.models.melanomanet import create_model
 from melanomanet.utils.checkpoint import load_checkpoint
 from melanomanet.utils.gradcam import MelanomaGradCAM
+from melanomanet.utils.uncertainty import (
+    MCDropoutEstimator,
+    get_uncertainty_interpretation,
+)
 
 # Supported image formats
 SUPPORTED_FORMATS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
@@ -95,7 +106,14 @@ def run_inference(
     output_path: str,
 ) -> None:
     """
-    Run inference on a single image with attention visualization and ABCDE analysis.
+    Run inference on a single image with comprehensive explainability.
+
+    Includes:
+    - Model prediction with confidence
+    - GradCAM++ attention visualization
+    - ABCDE criterion analysis
+    - MC Dropout uncertainty estimation
+    - FastCAV concept-based explanations
 
     Args:
         config_path: Path to config file
@@ -107,8 +125,10 @@ def run_inference(
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 
-    # Read ABCDE enable flag from config
+    # Read feature flags from config
     enable_abcde = config.get("abcde", {}).get("enable", True)
+    enable_uncertainty = config.get("uncertainty", {}).get("enable", True)
+    enable_fastcav = config.get("fastcav", {}).get("enable", True)
 
     device = torch.device(config["device"] if torch.cuda.is_available() else "cpu")
 
@@ -147,9 +167,54 @@ def run_inference(
         image_tensor, original_image_np, target_class=pred_class
     )
 
+    # MC Dropout Uncertainty Estimation
+    uncertainty_result = None
+    if enable_uncertainty:
+        print("\nEstimating prediction uncertainty (MC Dropout)...")
+        n_samples = config.get("uncertainty", {}).get("n_samples", 10)
+        threshold = config.get("uncertainty", {}).get("uncertainty_threshold", 0.5)
+
+        estimator = MCDropoutEstimator(
+            model=model,
+            n_samples=n_samples,
+            uncertainty_threshold=threshold,
+            device=device,
+        )
+        uncertainty_result = estimator.estimate(image_tensor)
+        print(get_uncertainty_interpretation(uncertainty_result))
+
+    # FastCAV Concept Analysis
+    fastcav_result = None
+    if enable_fastcav:
+        print("\nAnalyzing concept importance (FastCAV)...")
+        concepts_dir = Path(
+            config.get("fastcav", {}).get("concepts_dir", "./data/concepts")
+        )
+        cavs_path = Path(
+            config.get("fastcav", {}).get("cavs_path", "./checkpoints/cavs.pth")
+        )
+
+        if cavs_path.exists():
+            fastcav = FastCAV(
+                model=model,
+                concepts_dir=concepts_dir,
+                device=device,
+            )
+            fastcav.load_cavs(cavs_path)
+
+            fastcav_result = fastcav.analyze_image(
+                image_tensor,
+                target_class=pred_class,
+                class_name=class_names[pred_class],
+            )
+            print(create_fastcav_report(fastcav_result))
+        else:
+            print(f"Warning: CAVs file not found at {cavs_path}. Run training first.")
+
     # ABCDE Analysis
     abcde_result = None
     alignment_scores = None
+
     if enable_abcde:
         print("\nPerforming ABCDE criterion analysis...")
         abcde_config = config.get("abcde", {})
@@ -174,9 +239,10 @@ def run_inference(
 
     # Create comprehensive visualization
     if enable_abcde and abcde_result:
-        # Create larger figure with ABCDE visualizations
-        fig = plt.figure(figsize=(20, 12))
-        gs = fig.add_gridspec(3, 4, hspace=0.3, wspace=0.3)
+        # Determine figure size based on features enabled
+        n_rows = 3 if (enable_uncertainty or enable_fastcav) else 3
+        fig = plt.figure(figsize=(20, 4 * n_rows))
+        gs = fig.add_gridspec(n_rows, 4, hspace=0.3, wspace=0.3)
 
         # Row 1: Main prediction and GradCAM
         ax1 = fig.add_subplot(gs[0, 0])
@@ -270,32 +336,102 @@ def run_inference(
         )
         ax8.axis("off")
 
-        # Row 3: Alignment metrics and summary
+        # Row 3: Uncertainty and Concept Analysis
         ax9 = fig.add_subplot(gs[2, :2])
         ax9.axis("off")
-        summary_text = "ABCDE CRITERION SUMMARY\n" + "=" * 40 + "\n"
-        for criterion, flag_key in [
-            ("Asymmetry", "asymmetry_flag"),
-            ("Border", "border_flag"),
-            ("Color", "color_flag"),
-            ("Diameter", "diameter_flag"),
-        ]:
-            status = "[!] CONCERN" if abcde_result["flags"][flag_key] else "[OK] OK"
-            summary_text += f"{criterion}: {status}\n"
 
-        ax9.text(
-            0.1,
-            0.5,
-            summary_text,
-            fontsize=11,
-            fontfamily="monospace",
-            va="center",
-            bbox=dict(boxstyle="round,pad=1", facecolor="lightgray", alpha=0.5),
-        )
+        # Uncertainty panel
+        if uncertainty_result:
+            reliability = "RELIABLE" if uncertainty_result.is_reliable else "UNCERTAIN"
+            unc_color = (
+                "lightgreen" if uncertainty_result.is_reliable else "lightyellow"
+            )
+            unc_text = "UNCERTAINTY ANALYSIS\n" + "=" * 40 + "\n"
+            unc_text += f"Predictive: {uncertainty_result.predictive_uncertainty:.3f}"
+            unc_text += " (total model uncertainty)\n"
+            unc_text += f"Epistemic:  {uncertainty_result.epistemic_uncertainty:.3f}"
+            unc_text += " (model knowledge gaps)\n"
+            unc_text += f"Aleatoric:  {uncertainty_result.aleatoric_uncertainty:.3f}"
+            unc_text += " (inherent data noise)\n"
+            unc_text += "-" * 40 + "\n"
+            unc_text += f"Reliability: {reliability}\n"
+            if uncertainty_result.is_reliable:
+                unc_text += "(Low uncertainty = confident prediction)"
+            else:
+                unc_text += "(High uncertainty = review recommended)"
+            ax9.text(
+                0.1,
+                0.5,
+                unc_text,
+                fontsize=10,
+                fontfamily="monospace",
+                va="center",
+                bbox=dict(boxstyle="round,pad=1", facecolor=unc_color, alpha=0.7),
+            )
+        else:
+            summary_text = "ABCDE CRITERION SUMMARY\n" + "=" * 40 + "\n"
+            for criterion, flag_key in [
+                ("Asymmetry", "asymmetry_flag"),
+                ("Border", "border_flag"),
+                ("Color", "color_flag"),
+                ("Diameter", "diameter_flag"),
+            ]:
+                status = "[!] CONCERN" if abcde_result["flags"][flag_key] else "[OK] OK"
+                summary_text += f"{criterion}: {status}\n"
 
-        if alignment_scores:
-            ax10 = fig.add_subplot(gs[2, 2:])
-            ax10.axis("off")
+            ax9.text(
+                0.1,
+                0.5,
+                summary_text,
+                fontsize=11,
+                fontfamily="monospace",
+                va="center",
+                bbox=dict(boxstyle="round,pad=1", facecolor="lightgray", alpha=0.5),
+            )
+
+        # Concept importance panel
+        ax10 = fig.add_subplot(gs[2, 2:])
+        ax10.axis("off")
+
+        if fastcav_result and fastcav_result.concept_scores:
+            concept_text = "CONCEPT IMPORTANCE (FastCAV)\n" + "=" * 40 + "\n"
+            sorted_concepts = sorted(
+                fastcav_result.concept_scores.values(),
+                key=lambda x: abs(x.tcav_score),
+                reverse=True,
+            )
+            for cs in sorted_concepts[:4]:
+                direction = "+" if cs.tcav_score > 0 else "-"
+                concept_text += (
+                    f"{cs.concept_name}: {direction}{abs(cs.tcav_score):.2f}\n"
+                )
+            concept_text += "-" * 40 + "\n"
+            concept_text += "+ supports prediction\n"
+            concept_text += "- opposes prediction\n"
+            concept_text += "(higher magnitude = stronger influence)"
+            ax10.text(
+                0.1,
+                0.5,
+                concept_text,
+                fontsize=10,
+                fontfamily="monospace",
+                va="center",
+                bbox=dict(boxstyle="round,pad=1", facecolor="lightblue", alpha=0.5),
+            )
+        elif fastcav_result and not fastcav_result.concept_scores:
+            concept_text = "CONCEPT IMPORTANCE (FastCAV)\n" + "=" * 40 + "\n"
+            concept_text += "No concept scores available.\n"
+            concept_text += "Run 'pdm run train-fastcav' to train CAVs.\n"
+            ax10.text(
+                0.1,
+                0.5,
+                concept_text,
+                fontsize=11,
+                fontfamily="monospace",
+                va="center",
+                bbox=dict(boxstyle="round,pad=1", facecolor="lightyellow", alpha=0.5),
+            )
+        elif alignment_scores:
             alignment_text = "GradCAM ALIGNMENT\n" + "=" * 40 + "\n"
             alignment_text += (
                 f"Border Alignment: {alignment_scores['border_alignment']:.3f}\n"
@@ -315,7 +451,7 @@ def run_inference(
             )
 
         plt.suptitle(
-            "MelanomaNet: Explainable Melanoma Detection with ABCDE Analysis",
+            "MelanomaNet: Explainable Melanoma Detection with Uncertainty & Concept Analysis",
             fontsize=14,
             fontweight="bold",
         )
@@ -343,17 +479,49 @@ def run_inference(
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     print(f"\nVisualization saved to {output_path}")
 
-    # Save ABCDE report to text file
-    if enable_abcde and abcde_result:
-        report_path = Path(output_path).with_suffix(".txt")
-        with open(report_path, "w", encoding="utf-8") as f:
+    # Save comprehensive report to text file
+    report_path = Path(output_path).with_suffix(".txt")
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write("=" * 70 + "\n")
+        f.write("MELANOMANET COMPREHENSIVE ANALYSIS REPORT\n")
+        f.write("=" * 70 + "\n\n")
+
+        f.write(f"Image: {image_path}\n")
+        f.write(f"Prediction: {class_names[pred_class]}\n")
+        f.write(f"Confidence: {confidence:.4f}\n\n")
+
+        if uncertainty_result:
+            f.write("UNCERTAINTY ANALYSIS\n")
+            f.write("-" * 40 + "\n")
+            f.write(
+                f"Predictive Uncertainty: {uncertainty_result.predictive_uncertainty:.4f} "
+                "(total model uncertainty)\n"
+            )
+            f.write(
+                f"Epistemic Uncertainty:  {uncertainty_result.epistemic_uncertainty:.4f} "
+                "(model knowledge gaps - can improve with more data)\n"
+            )
+            f.write(
+                f"Aleatoric Uncertainty:  {uncertainty_result.aleatoric_uncertainty:.4f} "
+                "(inherent data noise - cannot be reduced)\n"
+            )
+            f.write(
+                f"Reliability: {'RELIABLE' if uncertainty_result.is_reliable else 'UNCERTAIN'}\n\n"
+            )
+
+        if enable_abcde and abcde_result:
             f.write(create_abcde_report(abcde_result, alignment_scores))
-        print(f"ABCDE report saved to {report_path}")
+            f.write("\n")
+
+        if fastcav_result:
+            f.write(create_fastcav_report(fastcav_result))
+
+    print(f"Report saved to {report_path}")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Run inference with GradCAM++ and ABCDE analysis on single or multiple images"
+        description="Run inference with comprehensive explainability features"
     )
     parser.add_argument("--config", type=str, required=True, help="Path to config file")
     parser.add_argument(

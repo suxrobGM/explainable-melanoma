@@ -213,5 +213,6 @@ checkpoints/
 
 data/isic_2019/test/*
 data/isic_2019/train/*
+data/concepts/*
 !data/isic_2019/test/.gitkeep
 !data/isic_2019/train/.gitkeep

@@ -194,7 +194,10 @@ def train(config: dict[str, Any], resume_checkpoint: str | None = None) -> None:
     # Create model
     console.print("[bold]Creating model...[/bold]")
     model = create_model(config).to(device)
-    console.print(f"Model: {config['model']['backbone']}")
+
+    # Display model info
+    backbone_name = config["model"]["backbone"]
+    console.print(f"Model: {backbone_name}")
     console.print(f"Parameters: {sum(p.numel() for p in model.parameters()):,}")
 
     # Loss and optimizer

@@ -51,9 +51,35 @@ evaluation:
   metrics: ["accuracy", "sensitivity", "specificity", "auc", "f1"]
   save_confusion_matrix: true
 
+# Uncertainty Quantification Configuration
+uncertainty:
+  # Enable MC Dropout uncertainty estimation during inference
+  enable: true
+  # Number of stochastic forward passes
+  n_samples: 10
+  # Threshold for marking predictions as unreliable (entropy)
+  uncertainty_threshold: 0.5
+  # Enable temperature scaling (requires calibration on val set)
+  temperature_scaling: false
+
 # GradCAM Configuration
 gradcam:
   target_layer: "auto"  # Auto-detected based on backbone architecture
+
+# FastCAV Concept-based Explainability Configuration
+fastcav:
+  # Enable FastCAV analysis during inference
+  enable: true
+  # Directory containing concept datasets
+  concepts_dir: "./data/concepts"
+  # Path to saved CAVs (will be created after training)
+  cavs_path: "./checkpoints/cavs.pth"
+  # Concepts to analyze (aligned with ABCDE criteria)
+  concepts:
+    - asymmetry
+    - irregular_border
+    - multicolor
+    - large_diameter
 
 # ABCDE Criterion Analysis Configuration
 abcde:
