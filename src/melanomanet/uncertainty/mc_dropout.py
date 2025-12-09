@@ -1,8 +1,13 @@
+from typing import TYPE_CHECKING
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 from .models import UncertaintyResult
+
+if TYPE_CHECKING:
+    from ..models.melanomanet import MelanomaNet
 
 
 class MCDropoutEstimator:
@@ -11,14 +16,18 @@ class MCDropoutEstimator:
 
     Uses multiple stochastic forward passes with dropout enabled
     to estimate epistemic (model) uncertainty.
+
+    Applies additional dropout on features during MC sampling to generate
+    meaningful epistemic uncertainty without requiring model retraining.
     """
 
     def __init__(
         self,
-        model: nn.Module,
+        model: "MelanomaNet",
         n_samples: int = 10,
         uncertainty_threshold: float = 0.5,
         device: torch.device | None = None,
+        feature_dropout_rate: float = 0.2,
     ):
         """
         Initialize MC Dropout estimator.
@@ -28,6 +37,7 @@ class MCDropoutEstimator:
             n_samples: Number of stochastic forward passes
             uncertainty_threshold: Threshold for reliable predictions
             device: Device to run inference on
+            feature_dropout_rate: Dropout rate applied to features during MC sampling
         """
         self.model = model
         self.n_samples = n_samples
@@ -35,6 +45,8 @@ class MCDropoutEstimator:
         self.device = device or torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
         )
+        # Additional dropout applied to features for better epistemic uncertainty
+        self.feature_dropout = nn.Dropout(p=feature_dropout_rate)
 
     def estimate(self, x: torch.Tensor) -> UncertaintyResult:
         """
@@ -51,18 +63,27 @@ class MCDropoutEstimator:
 
         x = x.to(self.device)
         self.model.to(self.device)
+        self.feature_dropout.to(self.device)
 
         # Store original training state
         was_training = self.model.training
 
         # Enable dropout for MC sampling
         self.model.train()
+        self.feature_dropout.train()
 
-        # Collect samples
+        # Extract features once (deterministic)
+        with torch.no_grad():
+            features = self.model.backbone(x)
+            pooled = self.model.global_pool(features).flatten(1)
+
+        # Collect samples with dropout on features
         logits_samples = []
         with torch.no_grad():
             for _ in range(self.n_samples):
-                logits = self.model(x)
+                # Apply dropout to features (stochastic)
+                dropped_features = self.feature_dropout(pooled)
+                logits = self.model.classifier(dropped_features)
                 logits_samples.append(logits)
 
         # Stack samples: (n_samples, batch, classes)

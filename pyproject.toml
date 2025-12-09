@@ -36,6 +36,7 @@ eval = "python scripts/eval.py --config config.yaml --checkpoint checkpoints/bes
 infer = "python scripts/infer.py --config config.yaml --checkpoint checkpoints/best_model.pth --input-dir data/sample_images"
 generate-concepts = "python scripts/generate_concepts.py --config config.yaml --output data/concepts"
 train-fastcav = "python scripts/train_fastcav.py --config config.yaml --checkpoint checkpoints/best_model.pth"
+paper-figures = "python scripts/generate_paper_figures.py --from-existing --output-dir outputs --paper-output docs/report/figures"
 
 
 [tool.pdm]
