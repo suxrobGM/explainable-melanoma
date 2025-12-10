@@ -61,6 +61,19 @@ data/isic_2019/
 └── ISIC_2019_Training_GroundTruth.csv
 ```
 
+## Pretrained Model
+
+The pretrained MelanomaNet model can be downloaded from: [Google Drive](https://drive.google.com/file/d/1iiRrsW_9egps1Isu7PDZBgB0KwWBiQnO)
+
+**Training Infrastructure:**
+
+- GPU: RTX 5080 16GB
+- CPU: AMD Ryzen 7 9800X3D
+- RAM: 32GB
+- OS: Windows 11
+- Epochs: 100
+- Dataset: ISIC 2019
+
 ## Usage
 
 ### Training
@@ -251,7 +264,7 @@ Each result shows:
 
 ```bibtex
 @misc{melanomanet2025,
-  title={MelanomaNet: Explainable Skin Lesion Classification},
+  title={MelanomaNet: Explainable Deep Learning for Skin Lesion Classification},
   author={Ilyosbekov, Sukhrob},
   year={2025}
 }
