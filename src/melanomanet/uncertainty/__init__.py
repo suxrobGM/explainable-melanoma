@@ -8,12 +8,10 @@ Uncertainty Estimation Module.
 
 from .mc_dropout import MCDropoutEstimator
 from .models import UncertaintyResult
-from .temprature_scaling import TemperatureScaling
 from .utils import compute_calibration_metrics, get_uncertainty_interpretation
 
 __all__ = [
     "MCDropoutEstimator",
-    "TemperatureScaling",
     "UncertaintyResult",
     "compute_calibration_metrics",
     "get_uncertainty_interpretation",
