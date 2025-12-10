@@ -80,14 +80,12 @@ The pretrained MelanomaNet model can be downloaded from: [Google Drive](https://
 
 ```bash
 pdm run train
-# Or: python scripts/train.py --config config.yaml
 ```
 
 ### Evaluation
 
 ```bash
 pdm run eval
-# Or: python scripts/eval.py --checkpoint checkpoints/best_model.pth --config config.yaml
 ```
 
 ### Inference
@@ -95,14 +93,9 @@ pdm run eval
 ```bash
 # Run inference on a single image
 pdm run infer
-# Or: python scripts/infer.py --checkpoint checkpoints/best_model.pth \
-#                             --input path/to/image.jpg \
-#                             --config config.yaml
 
 # Run inference on a directory of images
-python scripts/infer.py --checkpoint checkpoints/best_model.pth \
-                        --input-dir path/to/images/ \
-                        --config config.yaml
+pdm run infer -- --input-dir path/to/images/ --config config.yaml
 ```
 
 ### FastCAV Concept Training
@@ -115,7 +108,6 @@ pdm run generate-concepts
 
 # Train FastCAV on concept images
 pdm run train-fastcav
-# Or: python scripts/train_fastcav.py --config config.yaml --checkpoint checkpoints/best_model.pth
 ```
 
 Concept images should be organized as:
@@ -137,10 +129,10 @@ data/concepts/
 
 ```bash
 # Resume from last checkpoint
-python scripts/train.py --config config.yaml --resume ./checkpoints/last_checkpoint.pth
+pdm run train -- --config config.yaml --resume ./checkpoints/last_checkpoint.pth
 
 # Resume from specific epoch
-python scripts/train.py --config config.yaml --resume ./checkpoints/checkpoint_epoch_10.pth
+pdm run train -- --config config.yaml --resume ./checkpoints/checkpoint_epoch_10.pth
 ```
 
 ## Configuration
