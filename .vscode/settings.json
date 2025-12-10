@@ -12,5 +12,6 @@
     "editor.codeActionsOnSave": {
       "source.organizeImports": "always"
     }
-  }
+  },
+  "latex-workshop.formatting.latex": "latexindent"
 }
