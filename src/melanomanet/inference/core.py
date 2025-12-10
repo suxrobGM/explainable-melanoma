@@ -1,4 +1,6 @@
-"""Core inference function."""
+# CS 7180 Advanced Perception
+# Author: Sukhrobbek Ilyosbekov
+# Date: 2025-12-09
 
 import torch
 import yaml
@@ -26,7 +28,9 @@ def run_inference(
     image_path: str,
     output_path: str,
 ) -> None:
-    """Run inference on a single image with comprehensive explainability.
+    """
+    The main inference function that runs all analyses and creates outputs.
+    Run inference on a single image with comprehensive explainability.
 
     Args:
         config_path: Path to configuration YAML file

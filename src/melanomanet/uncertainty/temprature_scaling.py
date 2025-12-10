@@ -1,8 +1,12 @@
+# CS 7180 Advanced Perception
+# Author: Sukhrobbek Ilyosbekov
+# Date: 2025-12-09
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from rich.console import Console
-from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn
+from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn
 from torch.utils.data import DataLoader
 
 console = Console()

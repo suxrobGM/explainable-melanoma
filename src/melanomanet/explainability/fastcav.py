@@ -1,3 +1,7 @@
+# CS 7180 Advanced Perception
+# Author: Sukhrobbek Ilyosbekov
+# Date: 2025-12-09
+
 """
 FastCAV - Fast Concept Activation Vectors for concept-based explainability.
 
@@ -11,7 +15,7 @@ from typing import Any
 import numpy as np
 import torch
 from rich.console import Console
-from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn
+from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn
 from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler

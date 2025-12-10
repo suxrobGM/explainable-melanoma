@@ -1,3 +1,7 @@
+# CS 7180 Advanced Perception
+# Author: Sukhrobbek Ilyosbekov
+# Date: 2025-12-09
+
 """Visualization functions for inference results."""
 
 import matplotlib.pyplot as plt

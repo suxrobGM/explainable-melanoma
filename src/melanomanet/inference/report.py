@@ -1,4 +1,6 @@
-"""Report generation for inference results."""
+# CS 7180 Advanced Perception
+# Author: Sukhrobbek Ilyosbekov
+# Date: 2025-12-09
 
 from pathlib import Path
 

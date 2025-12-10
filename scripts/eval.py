@@ -1,3 +1,7 @@
+# CS 7180 Advanced Perception
+# Author: Sukhrobbek Ilyosbekov
+# Date: 2025-12-09
+
 """
 Evaluation script for trained MelanomaNet.
 
@@ -23,7 +27,13 @@ import seaborn as sns
 import torch
 import yaml
 from rich.console import Console
-from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn
+from rich.progress import (
+    BarColumn,
+    Progress,
+    TaskProgressColumn,
+    TextColumn,
+    TimeRemainingColumn,
+)
 from rich.table import Table
 from sklearn.metrics import confusion_matrix, roc_curve
 

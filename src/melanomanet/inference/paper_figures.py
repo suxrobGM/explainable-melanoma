@@ -1,3 +1,7 @@
+# CS 7180 Advanced Perception
+# Author: Sukhrobbek Ilyosbekov
+# Date: 2025-12-09
+
 """Paper-ready figure generation for reports."""
 
 from dataclasses import dataclass

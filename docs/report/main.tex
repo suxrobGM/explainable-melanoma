@@ -30,7 +30,7 @@ Northeastern University\\
 
 %------------------------------------------------------------------------
 \begin{abstract}
-Automated skin lesion classification using deep learning has shown remarkable accuracy, yet clinical adoption remains limited due to the ``black box'' nature of these models. We present MelanomaNet, an explainable deep learning system for multi-class skin lesion classification that addresses this gap through four complementary interpretability mechanisms. Our approach combines an EfficientNet V2 backbone with GradCAM++ attention visualization, automated ABCDE clinical criterion extraction, Fast Concept Activation Vectors (FastCAV) for concept-based explanations, and Monte Carlo Dropout uncertainty quantification. We evaluate our system on the ISIC 2019 dataset containing 25,331 dermoscopic images across 9 diagnostic categories. Our model achieves 85.61\% accuracy with weighted F1 score of 0.8564, while providing clinically meaningful explanations that align model attention with established dermatological assessment criteria. The uncertainty quantification module decomposes prediction confidence into epistemic and aleatoric components, enabling automatic flagging of unreliable predictions for clinical review. Our results demonstrate that high classification performance can be achieved alongside comprehensive interpretability, potentially facilitating greater trust and adoption in clinical dermatology workflows.
+Automated skin lesion classification using deep learning has shown remarkable accuracy, yet clinical adoption remains limited due to the ``black box'' nature of these models. We present MelanomaNet, an explainable deep learning system for multi-class skin lesion classification that addresses this gap through four complementary interpretability mechanisms. Our approach combines an EfficientNet V2 backbone with GradCAM++ attention visualization, automated ABCDE clinical criterion extraction, Fast Concept Activation Vectors (FastCAV) for concept-based explanations, and Monte Carlo Dropout uncertainty quantification. We evaluate our system on the ISIC 2019 dataset containing 25,331 dermoscopic images across 9 diagnostic categories. Our model achieves 85.61\% accuracy with weighted F1 score of 0.8564, while providing clinically meaningful explanations that align model attention with established dermatological assessment criteria. The uncertainty quantification module decomposes prediction confidence into epistemic and aleatoric components, enabling automatic flagging of unreliable predictions for clinical review. Our results demonstrate that high classification performance can be achieved alongside comprehensive interpretability, potentially facilitating greater trust and adoption in clinical dermatology workflows. Code is available at \url{https://github.com/suxrobgm/explainable-melanoma}.
 \end{abstract}
 
 %------------------------------------------------------------------------
@@ -83,7 +83,7 @@ Figure \ref{fig:architecture} illustrates the complete system architecture, show
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.95\textwidth]{figures/architecture.pdf}
+\includegraphics[width=0.95\textwidth]{figures/architecture.png}
 \caption{MelanomaNet system architecture. The main classification pipeline (top) processes dermoscopic images through EfficientNet V2-M to produce 9-class predictions. Four explainability modules (bottom, dashed box) provide complementary interpretations: ABCDE clinical criteria from image segmentation, GradCAM++ attention from feature maps, FastCAV concept scores from extracted features, and MC Dropout uncertainty estimates from stochastic forward passes. The GradCAM-ABCDE alignment module validates correspondence between model attention and clinical features.}
 \label{fig:architecture}
 \end{figure*}
@@ -124,36 +124,33 @@ where $M_{\text{border}}$ is a dilated border mask and $H$ is the normalized att
 
 \subsection{Fast Concept Activation Vectors}
 
-We implement FastCAV for concept-based explanations, adapting TCAV \cite{kim2018interpretability} with SGD classifiers for efficiency. For each clinical concept (asymmetry, irregular border, multicolor, large diameter), we train a linear classifier to distinguish concept-positive from concept-negative examples in the model's feature space. The Concept Activation Vector (CAV) is the normal to the learned decision boundary.
+We implement FastCAV for concept-based explanations, adapting TCAV \cite{kim2018interpretability} with SGD classifiers for efficiency. For each clinical concept (asymmetry, irregular border, multicolor, large diameter), we train a linear classifier to distinguish concept-positive from concept-negative examples in the model's 1280-dimensional feature space. The Concept Activation Vector (CAV) is the normal to the learned decision boundary.
 
-The TCAV score measures how strongly a concept influences predictions for a given class:
-
-\begin{equation}
-\text{TCAV}_c = \frac{|\{x : \nabla h_c(x) \cdot v_C > 0\}|}{|X|}
-\end{equation}
-
-where $h_c$ is the prediction for class $c$, $v_C$ is the CAV for concept $C$, and the gradient measures directional sensitivity. Positive scores indicate the concept supports the prediction; negative scores indicate opposition.
+The TCAV score quantifies concept influence by measuring the fraction of inputs for which the model's prediction becomes more confident when moving in the CAV direction. Positive scores indicate the concept supports the prediction; negative scores indicate opposition. This provides human-interpretable explanations showing which clinical attributes drive each classification decision.
 
 \subsection{MC Dropout Uncertainty Quantification}
 
-We employ Monte Carlo Dropout \cite{gal2016dropout} with $T=10$ stochastic forward passes to estimate uncertainty. For each input, we compute:
+We employ Monte Carlo Dropout \cite{gal2016dropout} with $T=10$ stochastic forward passes to estimate uncertainty. By keeping dropout active during inference, each forward pass samples from an approximate posterior distribution over model weights, enabling Bayesian uncertainty estimation without explicit probabilistic modeling. For each input, we compute three complementary uncertainty measures:
 
-\textbf{Predictive Uncertainty} (entropy of mean predictions):
+\textbf{Predictive Uncertainty} captures total model uncertainty through the entropy of averaged predictions:
 \begin{equation}
 H[\bar{p}] = -\sum_c \bar{p}_c \log \bar{p}_c, \quad \bar{p} = \frac{1}{T}\sum_{t=1}^T p_t
 \end{equation}
+where $p_t$ is the softmax output from forward pass $t$, $\bar{p}$ is the mean prediction across all $T$ passes, and $c$ indexes over classes. Higher entropy indicates the model is uncertain about which class to predict.
 
-\textbf{Epistemic Uncertainty} (variance across samples):
+\textbf{Epistemic Uncertainty} measures model uncertainty arising from limited training data:
 \begin{equation}
 \text{Var}[p] = \frac{1}{T}\sum_{t=1}^T (p_t - \bar{p})^2
 \end{equation}
+This variance across stochastic forward passes quantifies how much the model's predictions fluctuate when different subsets of neurons are dropped. High epistemic uncertainty suggests the model lacks sufficient training examples similar to the input, and can be reduced with more data.
 
-\textbf{Aleatoric Uncertainty} (mean of individual entropies):
+\textbf{Aleatoric Uncertainty} captures inherent data noise that cannot be reduced:
 \begin{equation}
 \frac{1}{T}\sum_{t=1}^T H[p_t]
 \end{equation}
+This averages the entropy of individual predictions, reflecting uncertainty due to ambiguous or overlapping features in the input itself. Unlike epistemic uncertainty, aleatoric uncertainty persists regardless of training data quantity.
 
-Predictions with entropy exceeding threshold 0.5 are flagged as unreliable for clinical review.
+Predictions with predictive uncertainty exceeding threshold 0.5 are flagged as unreliable, prompting clinical review. This decomposition allows clinicians to understand whether uncertainty stems from model limitations (epistemic) or inherent case ambiguity (aleatoric).
 
 %------------------------------------------------------------------------
 \section{Experiments and Results}

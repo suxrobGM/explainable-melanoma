@@ -1,3 +1,7 @@
+# CS 7180 Advanced Perception
+# Author: Sukhrobbek Ilyosbekov
+# Date: 2025-12-09
+
 """
 ABCDE feature extraction functions.
 
@@ -77,7 +81,9 @@ def analyze_asymmetry(image: np.ndarray, mask: np.ndarray) -> tuple[float, np.nd
     return asymmetry_score, viz
 
 
-def analyze_border(mask: np.ndarray, image: np.ndarray | None = None) -> tuple[float, np.ndarray]:
+def analyze_border(
+    mask: np.ndarray, image: np.ndarray | None = None
+) -> tuple[float, np.ndarray]:
     """
     Analyze border irregularity.
 
@@ -95,7 +101,11 @@ def analyze_border(mask: np.ndarray, image: np.ndarray | None = None) -> tuple[f
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
     if not contours:
-        base_viz = image.copy() if image is not None else cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+        base_viz = (
+            image.copy()
+            if image is not None
+            else cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+        )
         return 0.0, base_viz
 
     # Get largest contour
@@ -104,7 +114,11 @@ def analyze_border(mask: np.ndarray, image: np.ndarray | None = None) -> tuple[f
     area = cv2.contourArea(largest_contour)
 
     if area == 0:
-        base_viz = image.copy() if image is not None else cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+        base_viz = (
+            image.copy()
+            if image is not None
+            else cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+        )
         return 0.0, base_viz
 
     # Compactness measure (circularity)
@@ -199,7 +213,9 @@ def analyze_color(image: np.ndarray, mask: np.ndarray) -> tuple[float, int, np.n
     return variation_score, int(significant_colors), viz
 
 
-def analyze_diameter(mask: np.ndarray, image: np.ndarray | None = None) -> tuple[float, np.ndarray]:
+def analyze_diameter(
+    mask: np.ndarray, image: np.ndarray | None = None
+) -> tuple[float, np.ndarray]:
     """
     Analyze lesion diameter.
 
@@ -216,7 +232,11 @@ def analyze_diameter(mask: np.ndarray, image: np.ndarray | None = None) -> tuple
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     if not contours:
-        base_viz = image.copy() if image is not None else cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+        base_viz = (
+            image.copy()
+            if image is not None
+            else cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+        )
         return 0.0, base_viz
 
     # Get largest contour

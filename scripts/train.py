@@ -1,3 +1,7 @@
+# CS 7180 Advanced Perception
+# Author: Sukhrobbek Ilyosbekov
+# Date: 2025-12-09
+
 """
 Training script for MelanomaNet.
 
@@ -24,7 +28,13 @@ import torch
 import torch.nn as nn
 import yaml
 from rich.console import Console
-from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn
+from rich.progress import (
+    BarColumn,
+    Progress,
+    TaskProgressColumn,
+    TextColumn,
+    TimeRemainingColumn,
+)
 from rich.table import Table
 from torch.amp.grad_scaler import GradScaler
 from torch.optim import Adam, AdamW

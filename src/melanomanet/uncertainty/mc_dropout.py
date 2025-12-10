@@ -1,13 +1,13 @@
-from typing import TYPE_CHECKING
+# CS 7180 Advanced Perception
+# Author: Sukhrobbek Ilyosbekov
+# Date: 2025-12-09
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from ..models.melanomanet import MelanomaNet
 from .models import UncertaintyResult
-
-if TYPE_CHECKING:
-    from ..models.melanomanet import MelanomaNet
 
 
 class MCDropoutEstimator:
@@ -23,7 +23,7 @@ class MCDropoutEstimator:
 
     def __init__(
         self,
-        model: "MelanomaNet",
+        model: MelanomaNet,
         n_samples: int = 10,
         uncertainty_threshold: float = 0.5,
         device: torch.device | None = None,

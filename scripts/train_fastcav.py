@@ -1,3 +1,7 @@
+# CS 7180 Advanced Perception
+# Author: Sukhrobbek Ilyosbekov
+# Date: 2025-12-09
+
 """
 Train FastCAV concept vectors using a pre-trained model checkpoint.
 

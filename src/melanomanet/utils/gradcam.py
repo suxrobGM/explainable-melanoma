@@ -1,3 +1,7 @@
+# CS 7180 Advanced Perception
+# Author: Sukhrobbek Ilyosbekov
+# Date: 2025-12-09
+
 """
 GradCAM++ implementation for attention visualization.
 
@@ -70,7 +74,9 @@ class MelanomaGradCAM:
 
         # Generate CAM
         # target_class=None means use the predicted class
-        targets = None if target_class is None else [ClassifierOutputTarget(target_class)]
+        targets = (
+            None if target_class is None else [ClassifierOutputTarget(target_class)]
+        )
 
         grayscale_cam = self.cam(input_tensor=image, targets=targets)
 

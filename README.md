@@ -2,6 +2,8 @@
 
 Explainable deep learning system for multi-class skin lesion classification with comprehensive interpretability features including ABCDE criterion validation, concept-based explanations (FastCAV), and uncertainty quantification.
 
+**Paper**: [MelanomaNet: Explainable Deep Learning for Skin Lesion Classification](docs/report/main.pdf)
+
 ## Features
 
 - **Multi-class skin lesion classification** across all 9 ISIC 2019 diagnostic categories:

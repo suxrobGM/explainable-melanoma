@@ -1,4 +1,6 @@
-"""Data models for inference results."""
+# CS 7180 Advanced Perception
+# Author: Sukhrobbek Ilyosbekov
+# Date: 2025-12-09
 
 from dataclasses import dataclass
 from typing import Any

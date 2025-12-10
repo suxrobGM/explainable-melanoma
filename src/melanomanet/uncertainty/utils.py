@@ -1,3 +1,11 @@
+# CS 7180 Advanced Perception
+# Author: Sukhrobbek Ilyosbekov
+# Date: 2025-12-09
+
+"""
+Utility functions for uncertainty estimation.
+"""
+
 import numpy as np
 
 from .models import UncertaintyResult
