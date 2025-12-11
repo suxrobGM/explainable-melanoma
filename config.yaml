@@ -2,7 +2,7 @@
 data:
   dataset_name: "ISIC2019"
   data_dir: "./data/isic_2019"
-  train_split: 0.7
+  train_split: 0.7 # Train/Val/Test split ratios: 70% train, 15% val, 15% test
   val_split: 0.15
   test_split: 0.15
   num_classes: 9  # Multi-class: All ISIC 2019 diagnostic categories
