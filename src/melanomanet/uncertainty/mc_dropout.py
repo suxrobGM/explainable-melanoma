@@ -8,16 +8,24 @@ import torch.nn.functional as F
 from ..models.melanomanet import MelanomaNet
 from .models import UncertaintyResult
 
+_EPS = 1e-10
+
 
 class MCDropoutEstimator:
     """
     Monte Carlo Dropout uncertainty estimator.
 
-    Uses multiple stochastic forward passes with dropout enabled
-    to estimate epistemic (model) uncertainty.
+    Runs several stochastic forward passes with the network's dropout layers
+    active (following Gal and Ghahramani, 2016) and summarises the resulting
+    predictive distribution. Batch-normalisation layers are kept in evaluation
+    mode so that single-image inference does not depend on batch statistics;
+    only dropout is made stochastic.
 
-    Applies additional dropout on features during MC sampling to generate
-    meaningful epistemic uncertainty without requiring model retraining.
+    Predictive uncertainty is the entropy of the mean prediction. It is
+    decomposed as predictive = aleatoric + epistemic, where the aleatoric term
+    is the mean entropy of the individual passes and the epistemic term is the
+    mutual information between the prediction and the model parameters
+    (predictive entropy minus the aleatoric term).
     """
 
     def __init__(
@@ -26,7 +34,6 @@ class MCDropoutEstimator:
         n_samples: int = 10,
         uncertainty_threshold: float = 0.5,
         device: torch.device | None = None,
-        feature_dropout_rate: float = 0.2,
     ):
         """
         Initialize MC Dropout estimator.
@@ -34,9 +41,9 @@ class MCDropoutEstimator:
         Args:
             model: MelanomaNet model
             n_samples: Number of stochastic forward passes
-            uncertainty_threshold: Threshold for reliable predictions
+            uncertainty_threshold: Threshold on predictive entropy below which a
+                prediction is considered reliable
             device: Device to run inference on
-            feature_dropout_rate: Dropout rate applied to features during MC sampling
         """
         self.model = model
         self.n_samples = n_samples
@@ -44,8 +51,32 @@ class MCDropoutEstimator:
         self.device = device or torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
         )
-        # Additional dropout applied to features for better epistemic uncertainty
-        self.feature_dropout = nn.Dropout(p=feature_dropout_rate)
+
+    @staticmethod
+    def _enable_dropout(model: nn.Module) -> None:
+        """Set only dropout layers to training mode, leaving all others (in
+        particular batch normalisation) in evaluation mode."""
+        for module in model.modules():
+            if isinstance(module, nn.modules.dropout._DropoutNd):
+                module.train()
+
+    def _sample_probs(self, x: torch.Tensor) -> torch.Tensor:
+        """Collect ``n_samples`` softmax outputs with dropout active.
+
+        Returns a tensor of shape ``(n_samples, batch, classes)``.
+        """
+        was_training = self.model.training
+        self.model.eval()
+        self._enable_dropout(self.model)
+
+        probs = []
+        with torch.no_grad():
+            for _ in range(self.n_samples):
+                logits = self.model(x)
+                probs.append(F.softmax(logits, dim=-1))
+
+        self.model.train(was_training)
+        return torch.stack(probs, dim=0)
 
     def estimate(self, x: torch.Tensor) -> UncertaintyResult:
         """
@@ -62,58 +93,27 @@ class MCDropoutEstimator:
 
         x = x.to(self.device)
         self.model.to(self.device)
-        self.feature_dropout.to(self.device)
 
-        # Store original training state
-        was_training = self.model.training
-
-        # Enable dropout for MC sampling
-        self.model.train()
-        self.feature_dropout.train()
-
-        # Extract features once (deterministic)
-        with torch.no_grad():
-            features = self.model.backbone(x)
-            pooled = self.model.global_pool(features).flatten(1)
-
-        # Collect samples with dropout on features
-        logits_samples = []
-        with torch.no_grad():
-            for _ in range(self.n_samples):
-                # Apply dropout to features (stochastic)
-                dropped_features = self.feature_dropout(pooled)
-                logits = self.model.classifier(dropped_features)
-                logits_samples.append(logits)
-
-        # Stack samples: (n_samples, batch, classes)
-        logits_stack = torch.stack(logits_samples, dim=0)
-        probs_stack = F.softmax(logits_stack, dim=-1)
-
-        # Mean prediction
+        probs_stack = self._sample_probs(x)  # (n_samples, 1, classes)
         mean_probs = probs_stack.mean(dim=0).squeeze(0)  # (classes,)
 
-        # Predicted class and confidence
-        predicted_class = mean_probs.argmax().item()
+        predicted_class = int(mean_probs.argmax().item())
         confidence = mean_probs[predicted_class].item()
 
-        # Predictive uncertainty: entropy of mean prediction
+        # Predictive uncertainty: entropy of the mean prediction.
         predictive_entropy = -torch.sum(
-            mean_probs * torch.log(mean_probs + 1e-10)
+            mean_probs * torch.log(mean_probs + _EPS)
         ).item()
 
-        # Epistemic uncertainty: variance across samples
-        epistemic = probs_stack.var(dim=0).mean().item()
-
-        # Aleatoric uncertainty: mean entropy of individual predictions
-        individual_entropies = -torch.sum(
-            probs_stack * torch.log(probs_stack + 1e-10), dim=-1
+        # Aleatoric uncertainty: mean entropy of the individual passes.
+        per_sample_entropy = -torch.sum(
+            probs_stack * torch.log(probs_stack + _EPS), dim=-1
         )
-        aleatoric = individual_entropies.mean().item()
+        aleatoric = per_sample_entropy.mean().item()
 
-        # Restore model state
-        self.model.train(was_training)
+        # Epistemic uncertainty: mutual information = predictive - aleatoric.
+        epistemic = max(0.0, predictive_entropy - aleatoric)
 
-        # Determine reliability
         is_reliable = predictive_entropy < self.uncertainty_threshold
 
         return UncertaintyResult(
@@ -136,29 +136,21 @@ class MCDropoutEstimator:
             x: Input tensor (batch, 3, H, W)
 
         Returns:
-            Tuple of (mean_probs, predictive_uncertainty, epistemic_uncertainty)
+            Tuple of (mean_probs, predictive_uncertainty, epistemic_uncertainty),
+            where epistemic uncertainty is the per-sample mutual information.
         """
         x = x.to(self.device)
         self.model.to(self.device)
 
-        was_training = self.model.training
-        self.model.train()
+        probs_stack = self._sample_probs(x)  # (n_samples, batch, classes)
+        mean_probs = probs_stack.mean(dim=0)  # (batch, classes)
 
-        logits_samples = []
-        with torch.no_grad():
-            for _ in range(self.n_samples):
-                logits = self.model(x)
-                logits_samples.append(logits)
-
-        logits_stack = torch.stack(logits_samples, dim=0)
-        probs_stack = F.softmax(logits_stack, dim=-1)
-
-        mean_probs = probs_stack.mean(dim=0)
         predictive_entropy = -torch.sum(
-            mean_probs * torch.log(mean_probs + 1e-10), dim=-1
+            mean_probs * torch.log(mean_probs + _EPS), dim=-1
         )
-        epistemic = probs_stack.var(dim=0).mean(dim=-1)
-
-        self.model.train(was_training)
+        per_sample_entropy = -torch.sum(
+            probs_stack * torch.log(probs_stack + _EPS), dim=-1
+        ).mean(dim=0)
+        epistemic = torch.clamp(predictive_entropy - per_sample_entropy, min=0.0)
 
         return mean_probs, predictive_entropy, epistemic

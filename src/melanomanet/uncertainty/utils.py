@@ -37,7 +37,7 @@ def compute_calibration_metrics(
     mce = 0.0
     bin_stats = []
 
-    for bin_lower, bin_upper in zip(bin_lowers, bin_uppers):
+    for bin_lower, bin_upper in zip(bin_lowers, bin_uppers, strict=False):
         in_bin = (confidences > bin_lower) & (confidences <= bin_upper)
         prop_in_bin = in_bin.mean()
 

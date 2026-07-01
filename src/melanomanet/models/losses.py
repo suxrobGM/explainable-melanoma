@@ -50,6 +50,7 @@ class FocalLoss(nn.Module):
         p_t = torch.exp(-ce_loss)
 
         # Apply alpha weighting (supports both uniform and per-class)
+        alpha_t: float | torch.Tensor
         if isinstance(self.alpha, torch.Tensor):
             # Per-class alpha
             alpha_t = self.alpha.to(inputs.device)[targets]
@@ -78,6 +79,7 @@ def create_criterion(config: dict, class_weights: torch.Tensor) -> nn.Module:
     Returns:
         Loss criterion module
     """
+    criterion: nn.Module
     if config["training"].get("focal_loss", False):
         # Focal loss
         criterion = FocalLoss(

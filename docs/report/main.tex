@@ -1,35 +1,32 @@
-\documentclass[10pt,twocolumn,letterpaper]{article}
+\documentclass[journal]{IEEEtran}
 
-\usepackage{cvpr}
-\usepackage{times}
-\usepackage{epsfig}
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
 \usepackage{multirow}
 \usepackage{subcaption}
-\usepackage[breaklinks=true,bookmarks=false]{hyperref}
+\usepackage{url}
+\usepackage[hidelinks,breaklinks=true,bookmarks=false]{hyperref}
 
-% The manuscript body is split into per-section files under sections/ for
-% easier editing; each is pulled in with \input below. To switch to an IEEE
-% journal template, replace the preamble above with \documentclass[journal]
-% {IEEEtran} and the section \input list is reused unchanged.
+% The manuscript body is split into per-section files under sections/ and pulled
+% in with \input below, so the prose can be edited independently of the preamble.
 
 \begin{document}
 
-\title{MelanomaNet: Explainable Deep Learning for Skin Lesion Classification}
+\title{MelanomaNet: Explainable Deep Learning for\\ Skin Lesion Classification}
 
-\author{Sukhrobbek Ilyosbekov\\
-Northeastern University\\
-{\tt\small ilyosbekov.s@northeastern.edu}
+\author{Sukhrobbek~Ilyosbekov%
+    \thanks{S. Ilyosbekov is with Northeastern University, Boston, MA, USA
+        (e-mail: ilyosbekov.s@northeastern.edu).}%
+    \thanks{Manuscript submitted for review. A preprint of this work is
+        available on arXiv.}%
 }
 
-\maketitle
-\thispagestyle{empty}
-\pagestyle{plain}
+\markboth{}{Ilyosbekov: Explainable Deep Learning for Skin Lesion Classification}
 
-%------------------------------------------------------------------------
+\maketitle
+
 \begin{abstract}
     Deep neural networks classify dermoscopic skin lesions with an accuracy that
     approaches that of experienced dermatologists, but they are seldom used in
@@ -52,7 +49,13 @@ Northeastern University\\
     \url{https://github.com/suxrobgm/explainable-melanoma}.
 \end{abstract}
 
-%------------------------------------------------------------------------
+\begin{IEEEkeywords}
+    Explainable AI, melanoma, dermoscopy, skin lesion classification,
+    uncertainty quantification, concept activation vectors, deep learning.
+\end{IEEEkeywords}
+
+\IEEEpeerreviewmaketitle
+
 \input{sections/introduction}
 \input{sections/related_work}
 \input{sections/methods}
@@ -60,10 +63,7 @@ Northeastern University\\
 \input{sections/discussion}
 \input{sections/conclusion}
 
-%------------------------------------------------------------------------
-{\small
-\bibliographystyle{ieeetr}
+\bibliographystyle{IEEEtran}
 \bibliography{references}
-}
 
 \end{document}

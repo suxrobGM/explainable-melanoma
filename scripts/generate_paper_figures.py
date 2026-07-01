@@ -87,7 +87,9 @@ def generate_paper_figures(output_dir: Path, paper_output_dir: Path) -> None:
         panels = extract_image_panels(png_file)
 
         # Build data object
-        concepts, scores = zip(*parsed["fastcav"]) if parsed["fastcav"] else ([], [])
+        concepts, scores = (
+            zip(*parsed["fastcav"], strict=False) if parsed["fastcav"] else ([], [])
+        )
 
         data = PaperFigureData(
             prediction=parsed["prediction"],

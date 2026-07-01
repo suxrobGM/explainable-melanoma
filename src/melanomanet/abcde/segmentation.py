@@ -44,7 +44,8 @@ def extract_lesion_mask(image: np.ndarray) -> np.ndarray:
     center_mean = float(np.mean(center_region))
     edge_mean = float(np.mean(edge_region))
 
-    # Heuristic 2: Check which region is smaller (lesion is typically smaller than background)
+    # Heuristic 2: Check which region is smaller
+    # (the lesion is typically smaller than the background)
     white_pixels = int(np.sum(mask > 0))
     black_pixels = int(np.sum(mask == 0))
 

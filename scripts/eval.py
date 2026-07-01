@@ -18,7 +18,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from typing import Annotated
+from typing import Annotated, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -127,9 +127,9 @@ def evaluate(config_path: str, checkpoint_path: str) -> None:
     # Evaluate
     console.print("\n[bold cyan]Evaluating on test set...[/bold cyan]\n")
 
-    all_preds = []
-    all_labels = []
-    all_probs = []
+    all_preds: list[Any] = []
+    all_labels: list[Any] = []
+    all_probs: list[Any] = []
 
     with torch.no_grad():
         with Progress(

@@ -134,11 +134,12 @@ of images with a positive directional derivative.
 \subsection{MC Dropout Uncertainty Quantification}
 
 We employ Monte Carlo Dropout \cite{gal2016dropout} with $T=10$ stochastic
-forward passes to estimate uncertainty. By keeping dropout active during
-inference, each forward pass samples from an approximate posterior
-distribution over model weights, enabling Bayesian uncertainty estimation
-without explicit probabilistic modeling. For each input, we compute three
-complementary uncertainty measures:
+forward passes to estimate uncertainty. The dropout layers are kept active at
+inference while batch-normalisation layers remain in evaluation mode, so that
+each pass draws a sample from an approximate posterior over the network weights
+without making single-image predictions depend on batch statistics. From the $T$
+sampled distributions we compute three uncertainty measures that satisfy the
+decomposition predictive $=$ aleatoric $+$ epistemic:
 
 \textbf{Predictive Uncertainty} captures total model uncertainty through
 the entropy of averaged predictions:
@@ -150,25 +151,24 @@ where $p_t$ is the softmax output from forward pass $t$, $\bar{p}$ is the
 mean prediction across all $T$ passes, and $c$ indexes over classes. Higher
 entropy indicates the model is uncertain about which class to predict.
 
-\textbf{Epistemic Uncertainty} measures model uncertainty arising from
-limited training data:
+\textbf{Aleatoric Uncertainty} captures inherent data noise and is the mean
+entropy of the individual passes:
 \begin{equation}
-    \text{Var}[p] = \frac{1}{T}\sum_{t=1}^T (p_t - \bar{p})^2
+    \mathbb{E}[H] = \frac{1}{T}\sum_{t=1}^T H[p_t].
 \end{equation}
-This variance across stochastic forward passes quantifies how much the
-model's predictions fluctuate when different subsets of neurons are dropped.
-High epistemic uncertainty suggests the model lacks sufficient training
-examples similar to the input, and can be reduced with more data.
+It reflects uncertainty due to ambiguous or overlapping features in the input
+itself and persists regardless of the amount of training data.
 
-\textbf{Aleatoric Uncertainty} captures inherent data noise that cannot
-be reduced:
+\textbf{Epistemic Uncertainty} measures model uncertainty arising from limited
+training data. We quantify it as the mutual information between the prediction
+and the model parameters, which for this decomposition equals the difference
+between the predictive entropy and the aleatoric term:
 \begin{equation}
-    \frac{1}{T}\sum_{t=1}^T H[p_t]
+    I = H[\bar{p}] - \frac{1}{T}\sum_{t=1}^T H[p_t].
 \end{equation}
-This averages the entropy of individual predictions, reflecting uncertainty
-due to ambiguous or overlapping features in the input itself. Unlike
-epistemic uncertainty, aleatoric uncertainty persists regardless of
-training data quantity.
+It is large when the sampled passes disagree---that is, when the
+dropout-induced posterior is not concentrated---and can in principle be reduced
+by adding training examples similar to the input.
 
 Predictions with predictive uncertainty exceeding threshold 0.5 are flagged
 as unreliable, prompting clinical review. This decomposition allows

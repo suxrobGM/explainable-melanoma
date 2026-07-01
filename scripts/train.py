@@ -153,9 +153,9 @@ def validate(
     model.eval()
     total_loss = 0.0
 
-    all_preds = []
-    all_labels = []
-    all_probs = []
+    all_preds: list[Any] = []
+    all_labels: list[Any] = []
+    all_probs: list[Any] = []
 
     with torch.no_grad():
         with Progress(

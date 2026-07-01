@@ -37,18 +37,19 @@ def save_report(
         f.write(f"Confidence: {result.confidence:.4f}\n\n")
 
         if result.uncertainty:
+            unc = result.uncertainty
             f.write("UNCERTAINTY ANALYSIS\n")
             f.write("-" * 40 + "\n")
             f.write(
-                f"Predictive Uncertainty: {result.uncertainty.predictive_uncertainty:.4f} "
+                f"Predictive Uncertainty: {unc.predictive_uncertainty:.4f} "
                 "(total model uncertainty)\n"
             )
             f.write(
-                f"Epistemic Uncertainty:  {result.uncertainty.epistemic_uncertainty:.4f} "
+                f"Epistemic Uncertainty:  {unc.epistemic_uncertainty:.4f} "
                 "(model knowledge gaps - can improve with more data)\n"
             )
             f.write(
-                f"Aleatoric Uncertainty:  {result.uncertainty.aleatoric_uncertainty:.4f} "
+                f"Aleatoric Uncertainty:  {unc.aleatoric_uncertainty:.4f} "
                 "(inherent data noise - cannot be reduced)\n"
             )
             reliability = "RELIABLE" if result.uncertainty.is_reliable else "UNCERTAIN"

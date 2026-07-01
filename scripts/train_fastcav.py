@@ -12,7 +12,8 @@ Args:
     --checkpoint: Path to model checkpoint file
 
 Usage:
-    python scripts/train_fastcav.py --config config.yaml --checkpoint checkpoints/best_model.pth
+    python scripts/train_fastcav.py --config config.yaml \
+        --checkpoint checkpoints/best_model.pth
 """
 
 import sys
@@ -61,7 +62,8 @@ def train_fastcav(
             f"[bold red]Error: Concepts directory not found: {concepts_dir}[/bold red]"
         )
         console.print(
-            "[yellow]Run 'poe generate-concepts' first to create concept examples.[/yellow]"
+            "[yellow]Run 'poe generate-concepts' first to create "
+            "concept examples.[/yellow]"
         )
         return
 
@@ -133,7 +135,8 @@ def train_fastcav(
         console.print(f"\n[bold]Average CAV accuracy: {avg_acc:.3f}[/bold]")
         good_cavs = sum(1 for a in valid_accs if a > 0.6)
         console.print(
-            f"[bold]CAVs with good accuracy (>0.6): {good_cavs}/{len(valid_accs)}[/bold]"
+            f"[bold]CAVs with good accuracy (>0.6): "
+            f"{good_cavs}/{len(valid_accs)}[/bold]"
         )
 
 

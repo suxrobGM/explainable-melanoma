@@ -49,7 +49,8 @@ class FastCAV:
             model: MelanomaNet model
             concepts_dir: Directory containing concept folders
                          Each concept should have positive/ and negative/ subdirs
-            target_layer: Name of layer to extract features from (None = use model.get_features)
+            target_layer: Name of layer to extract features from
+                (None = use model.get_features)
             device: Device for computation
         """
         self.model = model

@@ -3,6 +3,7 @@
 
 from collections.abc import Callable
 from pathlib import Path
+from typing import cast
 
 import pandas as pd
 import torch
@@ -84,11 +85,11 @@ class MelanomaDataset(Dataset):
         image_path = self._get_image_path(image_id)
         image = Image.open(image_path).convert("RGB")
 
-        # Apply transforms
+        # Apply transforms (always provided in practice; produces a tensor)
         if self.transform:
             image = self.transform(image)
 
-        return image, label, image_id
+        return cast(torch.Tensor, image), label, str(image_id)
 
 
 def get_class_weights(labels_df: pd.DataFrame, num_classes: int = 9) -> torch.Tensor:

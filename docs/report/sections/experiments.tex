@@ -98,6 +98,12 @@ recall is 63.85\%.
 
 \subsection{Explainability Outputs}
 
+% NOTE: the uncertainty values quoted in the two figures below and in the
+% surrounding text were produced by the earlier MC-dropout implementation.
+% After the switch to full-network MC dropout with a mutual-information
+% epistemic term (Section on MC Dropout), regenerate these panels with
+% `poe paper-figures` and update the quoted predictive/epistemic/aleatoric
+% numbers accordingly.
 Figures \ref{fig:sample_benign} and \ref{fig:sample_mel} show the full analysis
 output for two test images with different risk profiles and reliability
 assessments.

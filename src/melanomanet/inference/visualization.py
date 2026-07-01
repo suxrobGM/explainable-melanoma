@@ -335,7 +335,8 @@ def create_visualization(
         )
 
         plt.suptitle(
-            "MelanomaNet: Explainable Melanoma Detection with Uncertainty & Concept Analysis",
+            "MelanomaNet: Explainable Melanoma Detection with "
+            "Uncertainty & Concept Analysis",
             fontsize=14,
             fontweight="bold",
         )

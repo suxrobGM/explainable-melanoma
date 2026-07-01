@@ -20,3 +20,14 @@ from .analyzer import ABCDEAnalyzer
 from .features import analyze_asymmetry, analyze_border, analyze_color, analyze_diameter
 from .reporting import create_abcde_report
 from .segmentation import extract_lesion_mask
+
+__all__ = [
+    "ABCDEAnalyzer",
+    "analyze_asymmetry",
+    "analyze_border",
+    "analyze_color",
+    "analyze_diameter",
+    "analyze_gradcam_alignment",
+    "create_abcde_report",
+    "extract_lesion_mask",
+]

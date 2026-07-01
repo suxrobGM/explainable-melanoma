@@ -138,10 +138,6 @@ def generate_concept_dataset(
     console.print(f"Thresholds: {thresholds}")
     console.print()
 
-    # Load ground truth
-    console.print("[bold]Loading ground truth...[/bold]")
-    gt_df = load_ground_truth(data_dir)
-
     # Get list of training images
     image_extensions = {".jpg", ".jpeg", ".png"}
     image_paths = [
@@ -204,8 +200,9 @@ def generate_concept_dataset(
         flag_col = concept_info["flag_column"]
 
         # Get positive and negative samples
-        positive_df = results_df[results_df[flag_col] == True]
-        negative_df = results_df[results_df[flag_col] == False]
+        flags = results_df[flag_col].astype(bool)
+        positive_df = results_df[flags]
+        negative_df = results_df[~flags]
 
         console.print(
             f"  Raw counts: {len(positive_df)} positive, {len(negative_df)} negative"
@@ -214,12 +211,14 @@ def generate_concept_dataset(
         # Check minimum samples
         if len(positive_df) < min_samples_per_class:
             console.print(
-                f"  [yellow]Warning: Not enough positive samples ({len(positive_df)} < {min_samples_per_class})[/yellow]"
+                f"  [yellow]Warning: Not enough positive samples "
+                f"({len(positive_df)} < {min_samples_per_class})[/yellow]"
             )
             continue
         if len(negative_df) < min_samples_per_class:
             console.print(
-                f"  [yellow]Warning: Not enough negative samples ({len(negative_df)} < {min_samples_per_class})[/yellow]"
+                f"  [yellow]Warning: Not enough negative samples "
+                f"({len(negative_df)} < {min_samples_per_class})[/yellow]"
             )
             continue
 

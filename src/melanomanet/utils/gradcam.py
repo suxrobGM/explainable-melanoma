@@ -18,6 +18,8 @@ from pytorch_grad_cam import GradCAMPlusPlus
 from pytorch_grad_cam.utils.image import show_cam_on_image
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 
+from ..models.melanomanet import MelanomaNet
+
 
 class MelanomaGradCAM:
     """
@@ -34,7 +36,7 @@ class MelanomaGradCAM:
 
     def __init__(
         self,
-        model: nn.Module,
+        model: MelanomaNet,
         target_layer: nn.Module | None = None,
         device: torch.device | None = None,
     ):
@@ -134,7 +136,7 @@ class MelanomaGradCAM:
             outputs = self.model(image)
             probs = F.softmax(outputs, dim=1)
 
-            pred_class = torch.argmax(probs, dim=1).item()
+            pred_class = int(torch.argmax(probs, dim=1).item())
             confidence = probs[0, pred_class].item()
 
         return pred_class, confidence
@@ -142,20 +144,27 @@ class MelanomaGradCAM:
 
 def denormalize_image(
     image: torch.Tensor,
-    mean: list = [0.485, 0.456, 0.406],
-    std: list = [0.229, 0.224, 0.225],
+    mean: list | None = None,
+    std: list | None = None,
 ) -> np.ndarray:
     """
     Denormalize image tensor for visualization.
 
     Args:
         image: Normalized image tensor (3, H, W) or (1, 3, H, W)
-        mean: Mean used for normalization. Default is ImageNet mean (0.485, 0.456, 0.406)
-        std: Std used for normalization. Default is ImageNet std (0.229, 0.224, 0.225)
+        mean: Normalization mean; defaults to the ImageNet mean
+            (0.485, 0.456, 0.406) when omitted.
+        std: Normalization std; defaults to the ImageNet std
+            (0.229, 0.224, 0.225) when omitted.
 
     Returns:
         Denormalized numpy array (H, W, 3) with values [0, 1]
     """
+    if mean is None:
+        mean = [0.485, 0.456, 0.406]
+    if std is None:
+        std = [0.229, 0.224, 0.225]
+
     if image.ndim == 4:
         image = image.squeeze(0)
 

@@ -12,7 +12,8 @@ Features:
 
 Usage:
     poe infer
-    python scripts/infer.py --config config.yaml --checkpoint checkpoints/best_model.pth --input image.jpg
+    python scripts/infer.py --config config.yaml \
+        --checkpoint checkpoints/best_model.pth --input image.jpg
 """
 
 import sys
@@ -110,7 +111,8 @@ def main(
     results = []
     for idx, image_path in enumerate(image_paths, 1):
         console.print(
-            f"\n[bold cyan][{idx}/{len(image_paths)}] Processing: {image_path.name}[/bold cyan]"
+            f"\n[bold cyan][{idx}/{len(image_paths)}] "
+            f"Processing: {image_path.name}[/bold cyan]"
         )
         console.print("-" * 70)
 
@@ -133,7 +135,8 @@ def main(
     console.print("[bold]PROCESSING SUMMARY[/bold]")
     console.print(f"[bold]{'=' * 70}[/bold]")
     console.print(
-        f"Total: {len(results)} | [green]Success: {successful}[/green] | [red]Failed: {failed}[/red]"
+        f"Total: {len(results)} | [green]Success: {successful}[/green] "
+        f"| [red]Failed: {failed}[/red]"
     )
 
     if failed > 0:
