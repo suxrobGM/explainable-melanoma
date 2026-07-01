@@ -1,0 +1,51 @@
+\section{Introduction}
+
+Melanoma accounts for a small share of skin-cancer diagnoses but the majority
+of skin-cancer deaths \cite{siegel2023cancer}. Stage at detection largely
+determines prognosis: the five-year relative survival is roughly 99\% for
+localised disease but falls to about 35\% once the disease has spread to
+distant sites \cite{siegel2023cancer}. Dermoscopy, which magnifies the lesion
+surface and suppresses surface reflection, is the standard screening tool, yet
+its interpretation is expertise-dependent and inter-observer agreement is
+imperfect even among specialists.
+
+Convolutional neural networks trained on dermoscopic and clinical images have
+matched dermatologist-level accuracy in controlled reader studies
+\cite{esteva2017dermatologist}, but their use in the clinic has not followed.
+The recurring obstacle is opacity: a network that reports only a class
+probability gives the clinician nothing to check against their own judgement,
+and a prediction that cannot be interrogated is difficult to act on when the
+stakes are a missed melanoma.
+
+The ABCDE rule (Asymmetry, Border irregularity, Colour variation, Diameter,
+Evolving lesion) is the clinical framework taught for melanoma assessment
+\cite{abbasi2004early}, and dermatologists routinely use it to record and
+communicate findings. A classifier whose output can be related back to these
+familiar attributes is easier to audit than one that emits a probability alone,
+because a reviewer can compare the model's stated evidence with what they see in
+the image.
+
+We present MelanomaNet, which augments a standard classifier with several
+interpretability components that each address a different question a clinician
+might ask:
+
+\begin{itemize}
+    \item \emph{Where did the model look?} GradCAM++ produces heatmaps over the
+          image regions that most affected the prediction.
+    \item \emph{Which clinical features are present?} An image-processing pipeline
+          extracts the ABCDE criteria and reports quantitative scores.
+    \item \emph{Which concepts drove the decision?} Concept activation vectors
+          score the influence of clinically defined concepts on the prediction.
+    \item \emph{How much should the output be trusted?} Monte Carlo dropout
+          estimates predictive uncertainty and separates its epistemic and
+          aleatoric parts.
+\end{itemize}
+
+The contributions of this paper are threefold. First, we integrate attention,
+clinical-criterion, concept, and uncertainty explanations for a single
+dermoscopy classifier and report them together on the same cases. Second, we
+define alignment metrics that measure, against a random-attention control,
+whether the model's attention falls on the lesion and its border rather than
+the background. Third, we evaluate the attention maps for faithfulness using
+deletion and insertion tests, so that the explanations are assessed rather than
+merely displayed.

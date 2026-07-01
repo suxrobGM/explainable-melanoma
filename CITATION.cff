@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software or its results, please cite the paper below."
+title: "MelanomaNet: Explainable Deep Learning for Skin Lesion Classification"
+authors:
+  - family-names: Ilyosbekov
+    given-names: Sukhrob
+    email: suxrobgm@gmail.com
+repository-code: "https://github.com/suxrobgm/explainable-melanoma"
+license: MIT
+preferred-citation:
+  type: article
+  title: "MelanomaNet: Explainable Deep Learning for Skin Lesion Classification"
+  authors:
+    - family-names: Ilyosbekov
+      given-names: Sukhrob
+  year: 2025
+  journal: "arXiv preprint"
+  url: "https://arxiv.org/abs/2512.09289"

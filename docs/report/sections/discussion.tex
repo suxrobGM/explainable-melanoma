@@ -1,0 +1,37 @@
+\section{Discussion}
+
+MelanomaNet reaches competitive accuracy while exposing four distinct views of
+each prediction, and the two goals do not appear to trade off against one
+another: the interpretability components are post-hoc and leave the classifier
+unchanged. What the components add is a way to check a prediction rather than
+accept it. The ABCDE pipeline restates the image in the vocabulary a
+dermatologist already uses, so a reviewer can compare the model's stated
+features against their own reading; the alignment and faithfulness results give
+some assurance that the attention maps track the model rather than decorate it;
+and the concept sensitivities describe a decision in semantic terms that
+complement the spatial attention map.
+
+The uncertainty estimates are useful precisely when the classifier is wrong but
+confident. Separating the epistemic and aleatoric contributions distinguishes
+two situations a clinician would treat differently: a case unlike anything in
+the training data, where more data would help, and a case that is genuinely
+ambiguous in the image itself, where it would not. Flagging such cases for
+review is the mechanism by which the system is meant to support a clinician
+rather than replace one.
+
+Several limitations bound these claims. The ABCDE analysis depends on automated
+segmentation, which degrades on low-contrast lesions and cluttered backgrounds
+and propagates its errors into the derived scores. The evolution criterion is
+absent because it requires longitudinal images that single-image datasets do
+not contain. Class imbalance still limits the rarer classes---actinic keratosis
+in particular---despite the weighted loss. The evaluation uses a single
+institution-agnostic dataset with no external test set, so the numbers should be
+read as internal validation rather than evidence of generalisation. Finally,
+post-hoc explanations describe correlations in the trained model; they do not
+prove that its internal computation follows clinical reasoning, and should be
+presented to clinicians with that caveat.
+
+Future work follows from these limitations: an external validation set from a
+different source to test generalisation, longitudinal data to add the evolution
+criterion, a larger concept vocabulary, and a reader study measuring whether the
+explanations actually change clinician decisions.

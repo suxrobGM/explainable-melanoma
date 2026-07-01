@@ -38,6 +38,7 @@ dev = [
     "ruff>=0.15.20",
     "mypy>=2.1.0",
     "poethepoet>=0.47.1",
+    "pytest>=8.3.0",
 ]
 
 [build-system]
@@ -80,6 +81,8 @@ explicit = true
 [tool.poe.tasks]
 train = "python scripts/train.py"
 eval = "python scripts/eval.py"
+run-seeds = "python scripts/run_seeds.py"
+faithfulness = "python scripts/eval_faithfulness.py"
 infer = "python scripts/infer.py --input-dir data/sample_images"
 generate-concepts = "python scripts/generate_concepts.py"
 train-fastcav = "python scripts/train_fastcav.py"
@@ -87,6 +90,7 @@ paper-figures = "python scripts/generate_paper_figures.py --from-existing"
 lint = "ruff check ."
 format = "ruff format ."
 typecheck = "mypy src scripts"
+test = "pytest -q"
 install-cpu = { cmd = "uv sync --extra cpu", help = "Sync with CPU-only PyTorch" }
 install-gpu = { cmd = "uv sync --extra gpu", help = "Sync with CUDA 13.0 PyTorch" }
 

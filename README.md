@@ -6,9 +6,10 @@ Explainable deep learning system for multi-class skin lesion classification with
 
 ## Features
 
-- **Multi-class skin lesion classification** across all 9 ISIC 2019 diagnostic categories:
+- **Multi-class skin lesion classification** across the ISIC 2019 diagnostic categories:
   - MEL (Melanoma), NV (Nevus), BCC (Basal cell carcinoma), AK (Actinic keratosis)
   - BKL (Benign keratosis), DF (Dermatofibroma), VASC (Vascular), SCC (Squamous cell carcinoma), UNK (Unknown)
+  - The model has 9 output logits, but ISIC 2019 provides no images labelled UNK, so training and evaluation effectively cover the 8 populated classes.
 - **EfficientNet V2 Medium** backbone with high-resolution (384x384) input for maximum detail preservation
 - Support for EfficientNet V2 architectures (S/M/L)
 - GradCAM++ attention visualization for model explainability
@@ -95,7 +96,16 @@ poe train
 ### Evaluation
 
 ```bash
+# Evaluate a checkpoint on the test set (saves metrics, ROC curves,
+# confusion matrix, and outputs/eval_predictions.npz)
 poe eval
+
+# Train/evaluate across multiple seeds and report mean +/- 95% CI
+poe run-seeds --seeds 25,26,27
+
+# Faithfulness of GradCAM++ attention (deletion/insertion AOPC + lesion IoU,
+# each against a random-attention control)
+poe faithfulness --checkpoint checkpoints/best_model.pth
 ```
 
 ### Inference
@@ -214,7 +224,7 @@ FastCAV (Fast Concept Activation Vectors) provides human-interpretable explanati
 - **Class Imbalance**: Weighted cross-entropy loss with optional focal loss; stratified train/val/test split
 - **Optimization**: Mixed precision training (AMP), cosine annealing LR scheduler, AdamW optimizer
 - **Checkpointing**: Saves best model by F1 score and last epoch for resumption
-- **Metrics**: Accuracy, weighted precision/recall/F1, per-class classification reports, confusion matrices
+- **Metrics**: Accuracy and balanced accuracy, weighted and macro precision/recall/F1, per-class sensitivity/specificity, macro and per-class ROC-AUC (one-vs-rest), per-class classification reports, and confusion matrices. Evaluation also saves per-sample predictions and probabilities to `outputs/eval_predictions.npz` for offline analysis.
 
 ### ABCDE Clinical Interpretability
 

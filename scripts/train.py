@@ -1,4 +1,3 @@
-# CS 7180 Advanced Perception
 # Author: Sukhrobbek Ilyosbekov
 # Date: 2025-12-09
 
@@ -185,14 +184,16 @@ def validate(
 
                 all_preds.extend(preds.cpu().numpy())
                 all_labels.extend(labels.cpu().numpy())
-                all_probs.extend(probs[:, 1].cpu().numpy())  # Melanoma probability
+                all_probs.append(probs.cpu().numpy())  # full (batch, C) matrix
 
                 progress.update(task, advance=1)
 
     # Calculate metrics
     metrics_tracker = MetricsTracker()
     metrics = metrics_tracker.calculate_metrics(
-        np.array(all_labels), np.array(all_preds), np.array(all_probs)
+        np.array(all_labels),
+        np.array(all_preds),
+        np.concatenate(all_probs, axis=0),
     )
 
     metrics["val_loss"] = total_loss / len(val_loader)
@@ -332,7 +333,8 @@ def train(config: dict[str, Any], resume_checkpoint: str | None = None) -> None:
                 scheduler=scheduler,
             )
             console.print(
-                f"[bold green]New best model saved! F1: {best_val_f1:.4f}[/bold green]\n"
+                f"[bold green]New best model saved! F1: {best_val_f1:.4f}"
+                "[/bold green]\n"
             )
 
         # Save periodic checkpoint (every N epochs, if configured)

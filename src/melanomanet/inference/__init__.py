@@ -1,4 +1,3 @@
-# CS 7180 Advanced Perception
 # Author: Sukhrobbek Ilyosbekov
 # Date: 2025-12-09
 

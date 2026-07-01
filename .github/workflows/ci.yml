@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-type-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Sync dependencies (CPU torch + dev tools)
+        run: uv sync --extra cpu
+
+      - name: Ruff (lint)
+        run: uv run ruff check .
+
+      - name: Mypy (type check)
+        run: uv run mypy src scripts
+
+      - name: Pytest
+        run: uv run pytest -q

@@ -1,0 +1,55 @@
+\section{Related Work}
+
+\subsection{Deep Learning for Skin Lesion Classification}
+
+The application of deep learning to dermoscopic image analysis gained
+significant attention following Esteva et al.'s demonstration that a CNN
+trained on clinical images could match dermatologist-level performance
+\cite{esteva2017dermatologist}. Subsequent work has explored various
+architectures and training strategies. The ISIC challenges have driven
+progress in this area by providing standardized benchmarks and large-scale
+annotated datasets. Recent approaches have employed transfer learning from
+ImageNet-pretrained models, with EfficientNet variants achieving strong
+results due to their favorable accuracy-efficiency tradeoff
+\cite{tan2019efficientnet}. Gessert et al. \cite{gessert2020skin} demonstrated
+that ensembles of EfficientNet models with extensive data augmentation could
+achieve top performance on ISIC challenges, though their work focused
+primarily on classification accuracy rather than interpretability.
+
+\subsection{Explainability in Medical Imaging}
+
+Explainable AI (XAI) has become increasingly important in medical applications
+where understanding model reasoning is critical for clinical acceptance.
+Gradient-weighted Class Activation Mapping (Grad-CAM) \cite{selvaraju2017grad}
+and its extensions provide visual explanations by highlighting image regions
+that contribute most to predictions. In dermatology, attention visualization
+helps verify that models focus on lesion features rather than artifacts or
+irrelevant background regions. Chattopadhay et al. \cite{chattopadhay2018grad}
+proposed Grad-CAM++, which provides more accurate localization through a
+weighted combination of positive partial derivatives, making it particularly
+suitable for medical imaging where precise localization matters.
+
+Concept-based explanations offer an alternative approach by relating model
+predictions to human-understandable concepts. Kim et al.
+\cite{kim2018interpretability} introduced Testing with Concept Activation
+Vectors (TCAV), which learns directions in a network's feature space
+corresponding to user-defined concepts. This approach has been applied to
+medical imaging to explain predictions in terms of clinically meaningful
+attributes, and recent work such as FastCAV \cite{schmalwasser2025fastcav} has
+reduced its computational cost. Our SGD-CAV implementation adapts this framework
+for efficient concept-based explanations aligned with dermatological concepts.
+
+\subsection{Uncertainty Quantification in Deep Learning}
+
+Reliable uncertainty estimates are essential for clinical decision support
+systems, as they enable appropriate human-AI collaboration by identifying
+cases requiring expert review. Gal and Ghahramani \cite{gal2016dropout}
+demonstrated that dropout applied at test time approximates Bayesian
+inference, providing uncertainty estimates without architectural changes.
+This Monte Carlo Dropout approach has been widely adopted in medical imaging
+due to its simplicity and effectiveness. Subsequent work has decomposed
+uncertainty into epistemic (model uncertainty) and aleatoric (data
+uncertainty) components \cite{kendall2017uncertainties}, providing more
+nuanced characterization of prediction confidence. Our system implements
+this decomposition to distinguish between cases where the model lacks
+knowledge versus cases with inherently ambiguous features.

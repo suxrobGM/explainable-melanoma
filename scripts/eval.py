@@ -1,4 +1,3 @@
-# CS 7180 Advanced Perception
 # Author: Sukhrobbek Ilyosbekov
 # Date: 2025-12-09
 
@@ -71,25 +70,33 @@ def plot_confusion_matrix(
     console.print(f"[green]Confusion matrix saved to {save_path}[/green]")
 
 
-def plot_roc_curve(
-    y_true: np.ndarray, y_prob: np.ndarray, save_path: Path, auc_score: float
+def plot_roc_curves(
+    y_true: np.ndarray,
+    y_prob: np.ndarray,
+    class_names: list,
+    per_class_auc: np.ndarray,
+    save_path: Path,
 ) -> None:
-    """Plot and save ROC curve."""
-    fpr, tpr, _ = roc_curve(y_true, y_prob)
+    """Plot per-class one-vs-rest ROC curves on a single axis."""
+    present = np.unique(y_true)
 
     plt.figure(figsize=(8, 6))
-    plt.plot(fpr, tpr, label=f"AUC = {auc_score:.4f}", linewidth=2)
-    plt.plot([0, 1], [0, 1], "k--", label="Random")
+    for c in present:
+        fpr, tpr, _ = roc_curve((y_true == c).astype(int), y_prob[:, c])
+        auc_c = per_class_auc[c]
+        plt.plot(fpr, tpr, linewidth=1.5, label=f"{class_names[c]} (AUC={auc_c:.3f})")
+
+    plt.plot([0, 1], [0, 1], "k--", linewidth=1, label="Random")
     plt.xlabel("False Positive Rate")
     plt.ylabel("True Positive Rate (Sensitivity)")
-    plt.title("ROC Curve")
-    plt.legend()
+    plt.title("Per-class ROC Curves (one-vs-rest)")
+    plt.legend(fontsize=8, loc="lower right")
     plt.grid(alpha=0.3)
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    console.print(f"[green]ROC curve saved to {save_path}[/green]")
+    console.print(f"[green]ROC curves saved to {save_path}[/green]")
 
 
 def evaluate(config_path: str, checkpoint_path: str) -> None:
@@ -151,40 +158,81 @@ def evaluate(config_path: str, checkpoint_path: str) -> None:
     # Calculate metrics
     y_true = np.array(all_labels)
     y_pred = np.array(all_preds)
+    y_prob = np.concatenate(all_probs, axis=0)  # (N, C)
 
+    class_names = config["data"]["class_names"]
     metrics_tracker = MetricsTracker()
-    # Pass dummy array for y_prob since it's not used in multi-class metrics
-    metrics = metrics_tracker.calculate_metrics(y_true, y_pred)
+    metrics = metrics_tracker.calculate_metrics(y_true, y_pred, y_prob)
 
-    # Print results
+    # Print overall results
     table = Table(title="Test Set Results (Multi-class)")
     table.add_column("Metric", style="cyan")
     table.add_column("Value", style="green")
 
     table.add_row("Accuracy", f"{metrics['accuracy']:.4f}")
+    table.add_row("Balanced accuracy", f"{metrics['balanced_accuracy']:.4f}")
     table.add_row("Precision (weighted)", f"{metrics['precision']:.4f}")
     table.add_row("Recall (weighted)", f"{metrics['recall']:.4f}")
     table.add_row("F1 Score (weighted)", f"{metrics['f1']:.4f}")
+    table.add_row("F1 Score (macro)", f"{metrics['macro_f1']:.4f}")
+    if metrics["macro_auc"] is not None:
+        table.add_row("ROC-AUC (macro, OvR)", f"{metrics['macro_auc']:.4f}")
 
     console.print(table)
     console.print()
 
+    # Per-class sensitivity / specificity / AUC
+    present = np.unique(y_true)
+    per_class_table = Table(title="Per-class Sensitivity / Specificity / AUC")
+    per_class_table.add_column("Class", style="cyan")
+    per_class_table.add_column("Sensitivity", style="green")
+    per_class_table.add_column("Specificity", style="green")
+    per_class_table.add_column("AUC (OvR)", style="green")
+    for c in present:
+        auc_c = metrics["per_class_auc"]
+        auc_str = f"{auc_c[c]:.4f}" if auc_c is not None else "-"
+        per_class_table.add_row(
+            class_names[c],
+            f"{metrics['per_class_sensitivity'][c]:.4f}",
+            f"{metrics['per_class_specificity'][c]:.4f}",
+            auc_str,
+        )
+    console.print(per_class_table)
+    console.print()
+
     # Print classification report
-    metrics_tracker.print_classification_report(
-        y_true, y_pred, config["data"]["class_names"]
-    )
+    metrics_tracker.print_classification_report(y_true, y_pred, class_names)
 
     # Create output directory
     output_dir = Path(config["paths"]["output_dir"])
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Persist per-sample predictions so AUC / faithfulness / plots can be
+    # recomputed without re-running the model.
+    np.savez_compressed(
+        output_dir / "eval_predictions.npz",
+        y_true=y_true,
+        y_pred=y_pred,
+        y_prob=y_prob,
+        class_names=np.array(class_names),
+    )
+    console.print(
+        f"[green]Per-sample predictions saved to "
+        f"{output_dir / 'eval_predictions.npz'}[/green]"
+    )
+
     # Plot and save visualizations
     if config["evaluation"]["save_confusion_matrix"]:
         plot_confusion_matrix(
+            y_true, y_pred, class_names, output_dir / "confusion_matrix.png"
+        )
+    if metrics["per_class_auc"] is not None:
+        plot_roc_curves(
             y_true,
-            y_pred,
-            config["data"]["class_names"],
-            output_dir / "confusion_matrix.png",
+            y_prob,
+            class_names,
+            metrics["per_class_auc"],
+            output_dir / "roc_curves.png",
         )
 
     console.print("\n[bold green]Evaluation complete![/bold green]")
