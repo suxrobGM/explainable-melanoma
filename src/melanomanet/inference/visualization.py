@@ -55,7 +55,7 @@ def create_fastcav_text(result: FastCAVResult) -> tuple[str, str]:
     if not result.concept_scores:
         text = "CONCEPT IMPORTANCE (FastCAV)\n" + "=" * 40 + "\n"
         text += "No concept scores available.\n"
-        text += "Run 'pdm run train-fastcav' to train CAVs.\n"
+        text += "Run 'poe train-fastcav' to train CAVs.\n"
         return text, "lightyellow"
 
     text = "CONCEPT IMPORTANCE (FastCAV)\n" + "=" * 40 + "\n"

@@ -12,7 +12,7 @@ Features:
 - FastCAV concept-based explanations
 
 Usage:
-    pdm run infer
+    poe infer
     python scripts/infer.py --config config.yaml --checkpoint checkpoints/best_model.pth --input image.jpg
 """
 
@@ -22,8 +22,9 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-import argparse
+from typing import Annotated
 
+import typer
 import yaml
 from rich.console import Console
 
@@ -70,44 +71,41 @@ def collect_image_paths(
     return sorted(set(image_paths))
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Run inference with comprehensive explainability features"
-    )
-    parser.add_argument("--config", type=str, required=True, help="Path to config file")
-    parser.add_argument(
-        "--checkpoint", type=str, required=True, help="Path to checkpoint"
-    )
-    parser.add_argument(
-        "--input",
-        type=str,
-        action="append",
-        help="Path to input image(s) - can be specified multiple times",
-    )
-    parser.add_argument("--input-dir", type=str, help="Directory containing images")
-    args = parser.parse_args()
-
-    if not args.input and not args.input_dir:
-        parser.error("Either --input or --input-dir must be specified")
+def main(
+    config: Annotated[str, typer.Option(help="Path to config file")] = "config.yaml",
+    checkpoint: Annotated[
+        str, typer.Option(help="Path to checkpoint")
+    ] = "checkpoints/best_model.pth",
+    input: Annotated[
+        list[str] | None,
+        typer.Option(help="Path to input image(s) - can be specified multiple times"),
+    ] = None,
+    input_dir: Annotated[
+        str | None, typer.Option(help="Directory containing images")
+    ] = None,
+):
+    """Run inference with comprehensive explainability features."""
+    if not input and not input_dir:
+        raise typer.BadParameter("Either --input or --input-dir must be specified")
 
     # Load config and setup output directory
-    with open(args.config, "r") as f:
-        config = yaml.safe_load(f)
+    with open(config) as f:
+        cfg = yaml.safe_load(f)
 
-    output_dir = Path(config["paths"]["output_dir"])
+    output_dir = Path(cfg["paths"]["output_dir"])
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Collect images
-    image_paths = collect_image_paths(args.input, args.input_dir)
+    image_paths = collect_image_paths(input, input_dir)
 
     if not image_paths:
         console.print("[red]Error: No valid images found![/red]")
         return
 
-    console.print(f"\n[bold]{'='*70}[/bold]")
+    console.print(f"\n[bold]{'=' * 70}[/bold]")
     console.print(f"[bold]Found {len(image_paths)} image(s) to process[/bold]")
     console.print(f"[bold]Output directory: {output_dir}[/bold]")
-    console.print(f"[bold]{'='*70}[/bold]\n")
+    console.print(f"[bold]{'=' * 70}[/bold]\n")
 
     # Process images
     results = []
@@ -120,9 +118,7 @@ def main():
         output_path = output_dir / f"{image_path.stem}_result.png"
 
         try:
-            run_inference(
-                args.config, args.checkpoint, str(image_path), str(output_path)
-            )
+            run_inference(config, checkpoint, str(image_path), str(output_path))
             results.append({"image": image_path.name, "status": "success"})
         except Exception as e:
             console.print(f"[red]Error processing {image_path.name}: {e}[/red]")
@@ -134,9 +130,9 @@ def main():
     successful = sum(1 for r in results if r["status"] == "success")
     failed = len(results) - successful
 
-    console.print(f"\n[bold]{'='*70}[/bold]")
+    console.print(f"\n[bold]{'=' * 70}[/bold]")
     console.print("[bold]PROCESSING SUMMARY[/bold]")
-    console.print(f"[bold]{'='*70}[/bold]")
+    console.print(f"[bold]{'=' * 70}[/bold]")
     console.print(
         f"Total: {len(results)} | [green]Success: {successful}[/green] | [red]Failed: {failed}[/red]"
     )
@@ -152,4 +148,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    typer.run(main)

@@ -19,13 +19,13 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-import argparse
 import random
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 import torch
 import torch.nn as nn
+import typer
 import yaml
 from rich.console import Console
 from rich.progress import (
@@ -296,7 +296,7 @@ def train(config: dict[str, Any], resume_checkpoint: str | None = None) -> None:
             scheduler.step()
 
         # Print metrics with progress information
-        table = Table(title=f"Epoch {epoch+1}/{total_epochs}")
+        table = Table(title=f"Epoch {epoch + 1}/{total_epochs}")
         table.add_column("Metric", style="cyan")
         table.add_column("Value", style="green")
 
@@ -341,7 +341,7 @@ def train(config: dict[str, Any], resume_checkpoint: str | None = None) -> None:
         if save_interval > 0 and (epoch + 1) % save_interval == 0:
             checkpoint_path = (
                 Path(config["paths"]["checkpoint_dir"])
-                / f"checkpoint_epoch_{epoch+1}.pth"
+                / f"checkpoint_epoch_{epoch + 1}.pth"
             )
             save_checkpoint(
                 model,
@@ -352,7 +352,7 @@ def train(config: dict[str, Any], resume_checkpoint: str | None = None) -> None:
                 scheduler=scheduler,
             )
             console.print(
-                f"[bold cyan]Checkpoint saved at epoch {epoch+1}[/bold cyan]\n"
+                f"[bold cyan]Checkpoint saved at epoch {epoch + 1}[/bold cyan]\n"
             )
 
     console.print(
@@ -360,23 +360,20 @@ def train(config: dict[str, Any], resume_checkpoint: str | None = None) -> None:
     )
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Train MelanomaNet")
-    parser.add_argument("--config", type=str, required=True, help="Path to config file")
-    parser.add_argument(
-        "--resume",
-        type=str,
-        default=None,
-        help="Path to checkpoint file to resume training from",
-    )
-    args = parser.parse_args()
-
+def main(
+    config: Annotated[str, typer.Option(help="Path to config file")] = "config.yaml",
+    resume: Annotated[
+        str | None,
+        typer.Option(help="Path to checkpoint file to resume training from"),
+    ] = None,
+):
+    """Train MelanomaNet."""
     # Load config
-    with open(args.config, "r") as f:
-        config = yaml.safe_load(f)
+    with open(config) as f:
+        cfg = yaml.safe_load(f)
 
-    train(config, resume_checkpoint=args.resume)
+    train(cfg, resume_checkpoint=resume)
 
 
 if __name__ == "__main__":
-    main()
+    typer.run(main)

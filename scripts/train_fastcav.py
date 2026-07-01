@@ -22,10 +22,10 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-import argparse
-from typing import Any
+from typing import Annotated, Any
 
 import torch
+import typer
 import yaml
 from rich.console import Console
 from rich.table import Table
@@ -62,7 +62,7 @@ def train_fastcav(
             f"[bold red]Error: Concepts directory not found: {concepts_dir}[/bold red]"
         )
         console.print(
-            "[yellow]Run 'pdm run generate-concepts' first to create concept examples.[/yellow]"
+            "[yellow]Run 'poe generate-concepts' first to create concept examples.[/yellow]"
         )
         return
 
@@ -138,23 +138,19 @@ def train_fastcav(
         )
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Train FastCAV concept vectors")
-    parser.add_argument("--config", type=str, required=True, help="Path to config file")
-    parser.add_argument(
-        "--checkpoint",
-        type=str,
-        required=True,
-        help="Path to model checkpoint file",
-    )
-    args = parser.parse_args()
-
+def main(
+    config: Annotated[str, typer.Option(help="Path to config file")] = "config.yaml",
+    checkpoint: Annotated[
+        str, typer.Option(help="Path to model checkpoint file")
+    ] = "checkpoints/best_model.pth",
+):
+    """Train FastCAV concept vectors."""
     # Load config
-    with open(args.config, "r") as f:
-        config = yaml.safe_load(f)
+    with open(config) as f:
+        cfg = yaml.safe_load(f)
 
-    train_fastcav(config, args.checkpoint)
+    train_fastcav(cfg, checkpoint)
 
 
 if __name__ == "__main__":
-    main()
+    typer.run(main)

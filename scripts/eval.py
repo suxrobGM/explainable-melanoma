@@ -19,12 +19,13 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-import argparse
+from typing import Annotated
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import torch
+import typer
 import yaml
 from rich.console import Console
 from rich.progress import (
@@ -100,7 +101,7 @@ def evaluate(config_path: str, checkpoint_path: str) -> None:
         checkpoint_path: Path to model checkpoint
     """
     # Load config
-    with open(config_path, "r") as f:
+    with open(config_path) as f:
         config = yaml.safe_load(f)
 
     device = torch.device(config["device"] if torch.cuda.is_available() else "cpu")
@@ -189,16 +190,15 @@ def evaluate(config_path: str, checkpoint_path: str) -> None:
     console.print("\n[bold green]Evaluation complete![/bold green]")
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Evaluate MelanomaNet")
-    parser.add_argument("--config", type=str, required=True, help="Path to config file")
-    parser.add_argument(
-        "--checkpoint", type=str, required=True, help="Path to checkpoint"
-    )
-    args = parser.parse_args()
-
-    evaluate(args.config, args.checkpoint)
+def main(
+    config: Annotated[str, typer.Option(help="Path to config file")] = "config.yaml",
+    checkpoint: Annotated[
+        str, typer.Option(help="Path to checkpoint")
+    ] = "checkpoints/best_model.pth",
+):
+    """Evaluate MelanomaNet."""
+    evaluate(config, checkpoint)
 
 
 if __name__ == "__main__":
-    main()
+    typer.run(main)

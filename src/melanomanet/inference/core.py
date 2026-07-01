@@ -39,7 +39,7 @@ def run_inference(
         output_path: Path for output visualization (report will be saved with .txt)
     """
     # Load config
-    with open(config_path, "r") as f:
+    with open(config_path) as f:
         config = yaml.safe_load(f)
 
     device = torch.device(config["device"] if torch.cuda.is_available() else "cpu")

@@ -55,12 +55,12 @@ def prepare_isic2019_labels(data_dir: str) -> pd.DataFrame:
     df = df[["image_id", "target"]]
 
     print(f"Loaded {len(df)} images")
-    print(f"Class distribution:")
+    print("Class distribution:")
     class_names = ["MEL", "NV", "BCC", "AK", "BKL", "DF", "VASC", "SCC", "UNK"]
 
     for i, name in enumerate(class_names):
         count = (df["target"] == i).sum()
-        print(f"  {name}: {count} ({count/len(df)*100:.2f}%)")
+        print(f"  {name}: {count} ({count / len(df) * 100:.2f}%)")
 
     return df
 
@@ -110,7 +110,7 @@ def create_data_loaders(
         random_state=config["seed"],
     )
 
-    print(f"\nDataset splits:")
+    print("\nDataset splits:")
     print(f"Train: {len(train_df)} images")
     print(f"Val: {len(val_df)} images")
     print(f"Test: {len(test_df)} images")

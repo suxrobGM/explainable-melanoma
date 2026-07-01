@@ -19,13 +19,12 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-import argparse
-import random
 import shutil
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 import pandas as pd
+import typer
 import yaml
 from PIL import Image
 from rich.console import Console
@@ -275,47 +274,30 @@ def generate_concept_dataset(
             )
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Generate concept datasets for FastCAV analysis"
-    )
-    parser.add_argument(
-        "--config",
-        type=str,
-        default="config.yaml",
-        help="Path to config file",
-    )
-    parser.add_argument(
-        "--output",
-        type=str,
-        default="data/concepts",
-        help="Output directory for concept datasets",
-    )
-    parser.add_argument(
-        "--max-samples",
-        type=int,
-        default=200,
-        help="Maximum samples per concept class",
-    )
-    parser.add_argument(
-        "--min-samples",
-        type=int,
-        default=50,
-        help="Minimum samples required per class",
-    )
-    args = parser.parse_args()
-
+def main(
+    config: Annotated[str, typer.Option(help="Path to config file")] = "config.yaml",
+    output: Annotated[
+        str, typer.Option(help="Output directory for concept datasets")
+    ] = "data/concepts",
+    max_samples: Annotated[
+        int, typer.Option(help="Maximum samples per concept class")
+    ] = 200,
+    min_samples: Annotated[
+        int, typer.Option(help="Minimum samples required per class")
+    ] = 50,
+):
+    """Generate concept datasets for FastCAV analysis."""
     # Load config
-    with open(args.config, "r") as f:
-        config = yaml.safe_load(f)
+    with open(config) as f:
+        cfg = yaml.safe_load(f)
 
     generate_concept_dataset(
-        config=config,
-        output_dir=Path(args.output),
-        max_samples_per_concept=args.max_samples,
-        min_samples_per_class=args.min_samples,
+        config=cfg,
+        output_dir=Path(output),
+        max_samples_per_concept=max_samples,
+        min_samples_per_class=min_samples,
     )
 
 
 if __name__ == "__main__":
-    main()
+    typer.run(main)

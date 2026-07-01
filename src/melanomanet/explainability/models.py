@@ -2,7 +2,7 @@
 # Author: Sukhrobbek Ilyosbekov
 # Date: 2025-12-09
 
-from attr import dataclass
+from dataclasses import dataclass
 
 
 @dataclass

@@ -4,11 +4,12 @@
 
 """Generate paper-ready figures from existing inference results."""
 
-import argparse
 import re
 from pathlib import Path
+from typing import Annotated
 
 import numpy as np
+import typer
 from PIL import Image
 
 from melanomanet.inference.paper_figures import PaperFigureData, create_paper_figure
@@ -118,29 +119,21 @@ def generate_paper_figures(output_dir: Path, paper_output_dir: Path) -> None:
         print(f"Generated: {output_path}")
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Generate paper-ready figures")
-    parser.add_argument(
-        "--output-dir",
-        type=str,
-        default="outputs",
-        help="Directory with existing inference results",
-    )
-    parser.add_argument(
-        "--paper-output",
-        type=str,
-        default="docs/report/figures",
-        help="Output directory for paper figures",
-    )
-    parser.add_argument(
-        "--from-existing",
-        action="store_true",
-        help="Generate from existing result files (default behavior)",
-    )
-    args = parser.parse_args()
-
-    generate_paper_figures(Path(args.output_dir), Path(args.paper_output))
+def main(
+    output_dir: Annotated[
+        str, typer.Option(help="Directory with existing inference results")
+    ] = "outputs",
+    paper_output: Annotated[
+        str, typer.Option(help="Output directory for paper figures")
+    ] = "docs/report/figures",
+    from_existing: Annotated[
+        bool,
+        typer.Option(help="Generate from existing result files (default behavior)"),
+    ] = True,
+):
+    """Generate paper-ready figures."""
+    generate_paper_figures(Path(output_dir), Path(paper_output))
 
 
 if __name__ == "__main__":
-    main()
+    typer.run(main)

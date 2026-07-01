@@ -29,19 +29,29 @@ Explainable deep learning system for multi-class skin lesion classification with
 ### Requirements
 
 - Python 3.14+
-- PyTorch 2.9+
-- PDM for dependency management
+- PyTorch 2.12+
+- uv for dependency management
 - CUDA-compatible GPU (optional, for training/inference acceleration)
 
 ### Setup
 
 ```bash
-# Install dependencies
-pdm install
+# Install dependencies (PyTorch is provided via the cpu / gpu extras - pick one)
+uv sync --extra gpu   # CUDA 13.0 build
+uv sync --extra cpu   # CPU-only build
 
-# If PDM is not installed then install it via pip:
-pip install --user pdm
+# Convenience aliases (poethepoet):
+poe install-gpu       # == uv sync --extra gpu
+poe install-cpu       # == uv sync --extra cpu
+
+# If uv is not installed:
+pip install uv
 ```
+
+> **Note:** Always sync with an extra to get PyTorch. After `uv sync --extra gpu`, run
+> tasks from the activated venv (`.venv\Scripts\activate`, then `poe <task>`) - a bare
+> `uv run` re-syncs without the extra and downgrades torch to CPU. To use `uv run`, pass
+> the extra: `uv run --extra gpu poe train`.
 
 ## Dataset Preparation
 
@@ -79,23 +89,23 @@ The pretrained MelanomaNet model can be downloaded from: [Google Drive](https://
 ### Training
 
 ```bash
-pdm run train
+poe train
 ```
 
 ### Evaluation
 
 ```bash
-pdm run eval
+poe eval
 ```
 
 ### Inference
 
 ```bash
 # Run inference on a single image
-pdm run infer
+poe infer
 
 # Run inference on a directory of images
-pdm run infer -- --input-dir path/to/images/ --config config.yaml
+poe infer --input-dir path/to/images/ --config config.yaml
 ```
 
 ### FastCAV Concept Training
@@ -104,10 +114,10 @@ Train concept activation vectors for concept-based explainability:
 
 ```bash
 # First, generate concept images (requires manual curation)
-pdm run generate-concepts
+poe generate-concepts
 
 # Train FastCAV on concept images
-pdm run train-fastcav
+poe train-fastcav
 ```
 
 Concept images should be organized as:
@@ -129,10 +139,10 @@ data/concepts/
 
 ```bash
 # Resume from last checkpoint
-pdm run train -- --config config.yaml --resume ./checkpoints/last_checkpoint.pth
+poe train --config config.yaml --resume ./checkpoints/last_checkpoint.pth
 
 # Resume from specific epoch
-pdm run train -- --config config.yaml --resume ./checkpoints/checkpoint_epoch_10.pth
+poe train --config config.yaml --resume ./checkpoints/checkpoint_epoch_10.pth
 ```
 
 ## Configuration

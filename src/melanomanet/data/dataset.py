@@ -2,8 +2,8 @@
 # Author: Sukhrobbek Ilyosbekov
 # Date: 2025-12-09
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 import pandas as pd
 import torch
