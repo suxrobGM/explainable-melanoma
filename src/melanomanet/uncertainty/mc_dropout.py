@@ -48,9 +48,7 @@ class MCDropoutEstimator:
         self.model = model
         self.n_samples = n_samples
         self.uncertainty_threshold = uncertainty_threshold
-        self.device = device or torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu"
-        )
+        self.device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     @staticmethod
     def _enable_dropout(model: nn.Module) -> None:
@@ -101,14 +99,10 @@ class MCDropoutEstimator:
         confidence = mean_probs[predicted_class].item()
 
         # Predictive uncertainty: entropy of the mean prediction.
-        predictive_entropy = -torch.sum(
-            mean_probs * torch.log(mean_probs + _EPS)
-        ).item()
+        predictive_entropy = -torch.sum(mean_probs * torch.log(mean_probs + _EPS)).item()
 
         # Aleatoric uncertainty: mean entropy of the individual passes.
-        per_sample_entropy = -torch.sum(
-            probs_stack * torch.log(probs_stack + _EPS), dim=-1
-        )
+        per_sample_entropy = -torch.sum(probs_stack * torch.log(probs_stack + _EPS), dim=-1)
         aleatoric = per_sample_entropy.mean().item()
 
         # Epistemic uncertainty: mutual information = predictive - aleatoric.
@@ -126,9 +120,7 @@ class MCDropoutEstimator:
             is_reliable=is_reliable,
         )
 
-    def estimate_batch(
-        self, x: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def estimate_batch(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Estimate uncertainty for a batch of inputs.
 
@@ -145,12 +137,10 @@ class MCDropoutEstimator:
         probs_stack = self._sample_probs(x)  # (n_samples, batch, classes)
         mean_probs = probs_stack.mean(dim=0)  # (batch, classes)
 
-        predictive_entropy = -torch.sum(
-            mean_probs * torch.log(mean_probs + _EPS), dim=-1
+        predictive_entropy = -torch.sum(mean_probs * torch.log(mean_probs + _EPS), dim=-1)
+        per_sample_entropy = -torch.sum(probs_stack * torch.log(probs_stack + _EPS), dim=-1).mean(
+            dim=0
         )
-        per_sample_entropy = -torch.sum(
-            probs_stack * torch.log(probs_stack + _EPS), dim=-1
-        ).mean(dim=0)
         epistemic = torch.clamp(predictive_entropy - per_sample_entropy, min=0.0)
 
         return mean_probs, predictive_entropy, epistemic

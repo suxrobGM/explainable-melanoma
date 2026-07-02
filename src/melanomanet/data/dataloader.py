@@ -109,9 +109,7 @@ def create_data_loaders(
     print(f"Test: {len(test_df)} images")
 
     # Create datasets
-    train_transforms = get_train_transforms(
-        data.image_size, config.training.augmentation
-    )
+    train_transforms = get_train_transforms(data.image_size, config.training.augmentation)
     val_transforms = get_val_transforms(data.image_size)
 
     train_dataset = MelanomaDataset(image_dir, train_df, train_transforms)

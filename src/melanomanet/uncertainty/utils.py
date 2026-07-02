@@ -10,9 +10,7 @@ import numpy as np
 from .models import UncertaintyResult
 
 
-def compute_calibration_metrics(
-    probs: np.ndarray, labels: np.ndarray, n_bins: int = 10
-) -> dict:
+def compute_calibration_metrics(probs: np.ndarray, labels: np.ndarray, n_bins: int = 10) -> dict:
     """
     Compute calibration metrics (ECE, MCE).
 

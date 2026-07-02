@@ -30,9 +30,7 @@ def create_abcde_report(
     asym_flag = abcde_result["flags"]["asymmetry_flag"]
     report += f"A - ASYMMETRY: {'[!] PRESENT' if asym_flag else '[OK] Absent'}\n"
     report += f"    Score: {asym_score:.3f}\n"
-    asym_interp = (
-        "Lesion shows asymmetry" if asym_flag else "Lesion appears symmetric"
-    )
+    asym_interp = "Lesion shows asymmetry" if asym_flag else "Lesion appears symmetric"
     report += f"    Interpretation: {asym_interp}\n\n"
 
     # Border
@@ -41,9 +39,7 @@ def create_abcde_report(
     report += f"B - BORDER: {'[!] IRREGULAR' if border_flag else '[OK] Regular'}\n"
     report += f"    Score: {border_score:.3f}\n"
     border_interp = (
-        "Irregular, poorly defined borders"
-        if border_flag
-        else "Smooth, well-defined borders"
+        "Irregular, poorly defined borders" if border_flag else "Smooth, well-defined borders"
     )
     report += f"    Interpretation: {border_interp}\n\n"
 
@@ -54,9 +50,7 @@ def create_abcde_report(
     report += f"C - COLOR: {'[!] VARIED' if color_flag else '[OK] Uniform'}\n"
     report += f"    Distinct colors: {num_colors}\n"
     report += f"    Variation score: {color_score:.3f}\n"
-    color_interp = (
-        "Multiple colors present" if color_flag else "Uniform coloration"
-    )
+    color_interp = "Multiple colors present" if color_flag else "Uniform coloration"
     report += f"    Interpretation: {color_interp}\n\n"
 
     # Diameter
@@ -65,9 +59,7 @@ def create_abcde_report(
     report += f"D - DIAMETER: {'[!] LARGE' if diameter_flag else '[OK] Small'}\n"
     report += f"    Diameter: {diameter:.1f} pixels\n"
     diameter_interp = (
-        "Lesion exceeds size threshold"
-        if diameter_flag
-        else "Lesion below size threshold"
+        "Lesion exceeds size threshold" if diameter_flag else "Lesion below size threshold"
     )
     report += f"    Interpretation: {diameter_interp}\n\n"
 
@@ -80,17 +72,9 @@ def create_abcde_report(
         report += "GRADCAM ATTENTION ALIGNMENT\n"
         report += "-" * 60 + "\n"
         report += f"Border alignment: {alignment_scores['border_alignment']:.3f}\n"
-        report += (
-            f"Overall lesion attention: {alignment_scores['overall_alignment']:.3f}\n"
-        )
-        report += (
-            f"Mean attention on lesion: "
-            f"{alignment_scores['mean_lesion_attention']:.3f}\n"
-        )
-        report += (
-            f"Max attention on lesion: "
-            f"{alignment_scores['max_lesion_attention']:.3f}\n\n"
-        )
+        report += f"Overall lesion attention: {alignment_scores['overall_alignment']:.3f}\n"
+        report += f"Mean attention on lesion: {alignment_scores['mean_lesion_attention']:.3f}\n"
+        report += f"Max attention on lesion: {alignment_scores['max_lesion_attention']:.3f}\n\n"
 
     report += "=" * 60 + "\n"
 

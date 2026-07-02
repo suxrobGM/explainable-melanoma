@@ -25,9 +25,7 @@ def create_uncertainty_text(result: UncertaintyResult) -> tuple[str, str]:
     color = "lightgreen" if result.is_reliable else "lightyellow"
 
     text = "UNCERTAINTY ANALYSIS\n" + "=" * 40 + "\n"
-    text += (
-        f"Predictive: {result.predictive_uncertainty:.3f} (total model uncertainty)\n"
-    )
+    text += f"Predictive: {result.predictive_uncertainty:.3f} (total model uncertainty)\n"
     text += f"Epistemic:  {result.epistemic_uncertainty:.3f} (model knowledge gaps)\n"
     text += f"Aleatoric:  {result.aleatoric_uncertainty:.3f} (inherent data noise)\n"
     text += "-" * 40 + "\n"
@@ -279,9 +277,7 @@ def plot_analysis_row(
         text = "GradCAM ALIGNMENT\n" + "=" * 40 + "\n"
         text += f"Border Alignment: {alignment_scores['border_alignment']:.3f}\n"
         text += f"Overall Attention: {alignment_scores['overall_alignment']:.3f}\n"
-        text += (
-            f"Mean Lesion Attention: {alignment_scores['mean_lesion_attention']:.3f}\n"
-        )
+        text += f"Mean Lesion Attention: {alignment_scores['mean_lesion_attention']:.3f}\n"
         ax_right.text(
             0.1,
             0.5,
@@ -333,8 +329,7 @@ def create_visualization(
         )
 
         plt.suptitle(
-            "MelanomaNet: Explainable Melanoma Detection with "
-            "Uncertainty & Concept Analysis",
+            "MelanomaNet: Explainable Melanoma Detection with Uncertainty & Concept Analysis",
             fontsize=14,
             fontweight="bold",
         )
@@ -351,8 +346,7 @@ def create_visualization(
 
         axes[2].imshow(result.visualization)
         axes[2].set_title(
-            f"Prediction: {class_names[result.pred_class]}\n"
-            f"Confidence: {result.confidence:.2%}"
+            f"Prediction: {class_names[result.pred_class]}\nConfidence: {result.confidence:.2%}"
         )
         axes[2].axis("off")
         plt.tight_layout()

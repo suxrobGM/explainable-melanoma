@@ -49,9 +49,7 @@ def train_one_epoch(
         TimeRemainingColumn(),
         console=console,
     ) as progress:
-        task = progress.add_task(
-            "Training", total=len(train_loader), epoch=epoch + 1, loss=0.0
-        )
+        task = progress.add_task("Training", total=len(train_loader), epoch=epoch + 1, loss=0.0)
 
         for images, labels, _ in train_loader:
             images = images.to(device, non_blocking=True)
@@ -139,17 +137,11 @@ def train(config: Config, resume_checkpoint: str | None = None) -> None:
     best_val_f1 = 0.0
 
     if resume_checkpoint:
-        console.print(
-            f"[bold yellow]Resuming from checkpoint: {resume_checkpoint}[/bold yellow]"
-        )
-        checkpoint = load_checkpoint(
-            Path(resume_checkpoint), model, optimizer, scheduler, device
-        )
+        console.print(f"[bold yellow]Resuming from checkpoint: {resume_checkpoint}[/bold yellow]")
+        checkpoint = load_checkpoint(Path(resume_checkpoint), model, optimizer, scheduler, device)
         start_epoch = checkpoint["epoch"] + 1
         best_val_f1 = checkpoint["metrics"].get("f1", 0.0)
-        console.print(
-            f"[bold green]Resumed from epoch {checkpoint['epoch'] + 1}[/bold green]"
-        )
+        console.print(f"[bold green]Resumed from epoch {checkpoint['epoch'] + 1}[/bold green]")
         console.print(f"[bold green]Best F1 so far: {best_val_f1:.4f}[/bold green]\n")
 
     console.print("\n[bold cyan]Starting training...[/bold cyan]")
@@ -199,10 +191,7 @@ def train(config: Config, resume_checkpoint: str | None = None) -> None:
                 checkpoint_dir / "best_model.pth",
                 scheduler=scheduler,
             )
-            console.print(
-                f"[bold green]New best model saved! F1: {best_val_f1:.4f}"
-                "[/bold green]\n"
-            )
+            console.print(f"[bold green]New best model saved! F1: {best_val_f1:.4f}[/bold green]\n")
 
         # Save periodic checkpoint (every N epochs, if configured)
         save_interval = training.checkpoint_save_interval
@@ -215,10 +204,6 @@ def train(config: Config, resume_checkpoint: str | None = None) -> None:
                 checkpoint_dir / f"checkpoint_epoch_{epoch + 1}.pth",
                 scheduler=scheduler,
             )
-            console.print(
-                f"[bold cyan]Checkpoint saved at epoch {epoch + 1}[/bold cyan]\n"
-            )
+            console.print(f"[bold cyan]Checkpoint saved at epoch {epoch + 1}[/bold cyan]\n")
 
-    console.print(
-        f"\n[bold green]Training complete! Best F1: {best_val_f1:.4f}[/bold green]"
-    )
+    console.print(f"\n[bold green]Training complete! Best F1: {best_val_f1:.4f}[/bold green]")

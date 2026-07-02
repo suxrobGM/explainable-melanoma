@@ -15,9 +15,7 @@ from ..utils.checkpoint import load_checkpoint
 from ..utils.console import console
 
 
-def load_model(
-    config: Config, checkpoint_path: str, device: torch.device
-) -> MelanomaNet:
+def load_model(config: Config, checkpoint_path: str, device: torch.device) -> MelanomaNet:
     """Load model from checkpoint.
 
     Args:

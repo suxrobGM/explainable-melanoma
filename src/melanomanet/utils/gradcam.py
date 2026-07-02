@@ -42,9 +42,7 @@ class MelanomaGradCAM:
         device: torch.device | None = None,
     ):
         self.model = model
-        self.device = device or torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu"
-        )
+        self.device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Get target layer (last conv layer by default)
         if target_layer is None:
@@ -76,9 +74,7 @@ class MelanomaGradCAM:
 
         # Generate CAM
         # target_class=None means use the predicted class
-        targets = (
-            None if target_class is None else [ClassifierOutputTarget(target_class)]
-        )
+        targets = None if target_class is None else [ClassifierOutputTarget(target_class)]
 
         grayscale_cam = self.cam(input_tensor=image, targets=targets)
 

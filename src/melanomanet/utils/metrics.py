@@ -47,16 +47,10 @@ class MetricsTracker:
 
         accuracy = float(accuracy_score(y_true, y_pred))
         balanced_accuracy = float(balanced_accuracy_score(y_true, y_pred))
-        precision = float(
-            precision_score(y_true, y_pred, average="weighted", zero_division=0)
-        )
-        recall = float(
-            recall_score(y_true, y_pred, average="weighted", zero_division=0)
-        )
+        precision = float(precision_score(y_true, y_pred, average="weighted", zero_division=0))
+        recall = float(recall_score(y_true, y_pred, average="weighted", zero_division=0))
         f1 = float(f1_score(y_true, y_pred, average="weighted", zero_division=0))
-        macro_f1 = float(
-            f1_score(y_true, y_pred, average="macro", zero_division=0)
-        )
+        macro_f1 = float(f1_score(y_true, y_pred, average="macro", zero_division=0))
 
         cm = confusion_matrix(y_true, y_pred, labels=labels)
         sensitivity, specificity = self._per_class_sensitivity_specificity(cm)

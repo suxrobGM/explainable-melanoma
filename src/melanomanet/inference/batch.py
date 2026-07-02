@@ -9,9 +9,7 @@ from .artifacts import result_png_path
 from .core import run_inference
 
 
-def collect_image_paths(
-    input_paths: list[str] | None, input_dir: str | None
-) -> list[Path]:
+def collect_image_paths(input_paths: list[str] | None, input_dir: str | None) -> list[Path]:
     """Collect all valid image paths from inputs.
 
     Args:
@@ -43,9 +41,7 @@ def collect_image_paths(
     return sorted(set(image_paths))
 
 
-def run_batch_inference(
-    config: Config, checkpoint_path: str, image_paths: list[Path]
-) -> None:
+def run_batch_inference(config: Config, checkpoint_path: str, image_paths: list[Path]) -> None:
     """Run inference on each image and print a processing summary."""
     output_dir = Path(config.paths.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -58,8 +54,7 @@ def run_batch_inference(
     results = []
     for idx, image_path in enumerate(image_paths, 1):
         console.print(
-            f"\n[bold cyan][{idx}/{len(image_paths)}] "
-            f"Processing: {image_path.name}[/bold cyan]"
+            f"\n[bold cyan][{idx}/{len(image_paths)}] Processing: {image_path.name}[/bold cyan]"
         )
         console.print("-" * 70)
 
@@ -70,9 +65,7 @@ def run_batch_inference(
             results.append({"image": image_path.name, "status": "success"})
         except Exception as e:
             console.print(f"[red]Error processing {image_path.name}: {e}[/red]")
-            results.append(
-                {"image": image_path.name, "status": "failed", "error": str(e)}
-            )
+            results.append({"image": image_path.name, "status": "failed", "error": str(e)})
 
     successful = sum(1 for r in results if r["status"] == "success")
     failed = len(results) - successful

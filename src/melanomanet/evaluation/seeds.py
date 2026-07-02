@@ -54,9 +54,7 @@ def _run_cli(args: list[str]) -> None:
 def _metrics_for_seed(pred_path: Path) -> dict:
     """Recompute the metrics dict from a saved eval_predictions.npz."""
     data = np.load(pred_path, allow_pickle=True)
-    return MetricsTracker().calculate_metrics(
-        data["y_true"], data["y_pred"], data["y_prob"]
-    )
+    return MetricsTracker().calculate_metrics(data["y_true"], data["y_pred"], data["y_prob"])
 
 
 def run_seeds(
@@ -101,9 +99,7 @@ def run_seeds(
         if not skip_training:
             _run_cli(["train", "--config", str(seed_config_path)])
         if not checkpoint.exists():
-            console.print(
-                f"[yellow]No checkpoint at {checkpoint}; skipping seed {seed}.[/yellow]"
-            )
+            console.print(f"[yellow]No checkpoint at {checkpoint}; skipping seed {seed}.[/yellow]")
             continue
 
         _run_cli(
@@ -150,9 +146,7 @@ def _report(per_seed_metrics: dict[int, dict], output_root: Path) -> None:
     with open(summary_csv, "w") as f:
         f.write("metric,mean,std,ci95_halfwidth,n\n")
         for key in _SCALAR_KEYS:
-            values = np.array(
-                [per_seed_metrics[s][key] for s in seeds], dtype=np.float64
-            )
+            values = np.array([per_seed_metrics[s][key] for s in seeds], dtype=np.float64)
             mean = float(np.mean(values))
             std = float(np.std(values, ddof=1)) if n > 1 else 0.0
             half = t * std / np.sqrt(n) if n > 1 else 0.0

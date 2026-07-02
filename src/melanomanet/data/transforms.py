@@ -10,9 +10,7 @@ IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
 
 
-def get_train_transforms(
-    image_size: int, augmentation: AugmentationConfig
-) -> T.Compose:
+def get_train_transforms(image_size: int, augmentation: AugmentationConfig) -> T.Compose:
     """
     Get training transforms with augmentation.
 
@@ -85,9 +83,7 @@ def get_val_transforms(image_size: int) -> T.Compose:
     """
     return T.Compose(
         [
-            T.Resize(
-                (image_size, image_size), interpolation=InterpolationMode.BILINEAR
-            ),
+            T.Resize((image_size, image_size), interpolation=InterpolationMode.BILINEAR),
             T.ToTensor(),
             T.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
         ]

@@ -25,12 +25,9 @@ def train_fastcav(config: Config, checkpoint_path: str) -> None:
 
     concepts_dir = Path(config.fastcav.concepts_dir)
     if not concepts_dir.exists():
+        console.print(f"[bold red]Error: Concepts directory not found: {concepts_dir}[/bold red]")
         console.print(
-            f"[bold red]Error: Concepts directory not found: {concepts_dir}[/bold red]"
-        )
-        console.print(
-            "[yellow]Run 'poe generate-concepts' first to create "
-            "concept examples.[/yellow]"
+            "[yellow]Run 'poe generate-concepts' first to create concept examples.[/yellow]"
         )
         return
 
@@ -51,9 +48,7 @@ def train_fastcav(config: Config, checkpoint_path: str) -> None:
     # Train all CAVs
     console.print("\n[bold cyan]Training CAVs...[/bold cyan]")
     transform = get_val_transforms(config.data.image_size)
-    accuracies = fastcav.train_all_cavs(
-        transform=transform, batch_size=config.fastcav.batch_size
-    )
+    accuracies = fastcav.train_all_cavs(transform=transform, batch_size=config.fastcav.batch_size)
 
     # Save CAVs
     cavs_path = Path(config.fastcav.cavs_path)
@@ -77,7 +72,4 @@ def train_fastcav(config: Config, checkpoint_path: str) -> None:
         avg_acc = sum(valid_accs) / len(valid_accs)
         console.print(f"\n[bold]Average CAV accuracy: {avg_acc:.3f}[/bold]")
         good_cavs = sum(1 for a in valid_accs if a > 0.6)
-        console.print(
-            f"[bold]CAVs with good accuracy (>0.6): "
-            f"{good_cavs}/{len(valid_accs)}[/bold]"
-        )
+        console.print(f"[bold]CAVs with good accuracy (>0.6): {good_cavs}/{len(valid_accs)}[/bold]")

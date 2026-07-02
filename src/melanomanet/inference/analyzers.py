@@ -38,9 +38,7 @@ def run_gradcam(
     console.print("[cyan]Generating attention map...[/cyan]")
     pred_class, confidence = gradcam.get_prediction(image_tensor)
     attention_map = gradcam.generate_attention_map(image_tensor, pred_class)
-    visualization = gradcam.visualize_attention(
-        image_tensor, original_np, target_class=pred_class
-    )
+    visualization = gradcam.visualize_attention(image_tensor, original_np, target_class=pred_class)
     return pred_class, confidence, attention_map, visualization
 
 
@@ -111,9 +109,7 @@ def run_fastcav_analysis(
     fastcav = FastCAV(model=model, concepts_dir=concepts_dir, device=device)
     fastcav.load_cavs(cavs_path)
 
-    result = fastcav.analyze_image(
-        image_tensor, target_class=pred_class, class_name=class_name
-    )
+    result = fastcav.analyze_image(image_tensor, target_class=pred_class, class_name=class_name)
     console.print(create_fastcav_report(result))
     return result
 

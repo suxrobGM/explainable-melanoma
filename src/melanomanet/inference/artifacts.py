@@ -80,9 +80,7 @@ def save_artifacts(
         }
 
     if result.alignment_scores is not None:
-        payload["alignment_scores"] = {
-            k: float(v) for k, v in result.alignment_scores.items()
-        }
+        payload["alignment_scores"] = {k: float(v) for k, v in result.alignment_scores.items()}
 
     if result.fastcav is not None:
         payload["fastcav"] = {
@@ -98,9 +96,7 @@ def save_artifacts(
             },
         }
 
-    output_path.with_suffix(".json").write_text(
-        json.dumps(payload, indent=2), encoding="utf-8"
-    )
+    output_path.with_suffix(".json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
     panels: dict[str, Any] = {
         "original": (np.asarray(original_np) * 255).astype(np.uint8),
@@ -128,8 +124,7 @@ def load_paper_figure_data(json_path: Path) -> PaperFigureData | None:
     abcde = payload.get("abcde") or {}
     fastcav = payload.get("fastcav") or {}
     scores_by_concept = {
-        name: score["tcav_score"]
-        for name, score in fastcav.get("concepts", {}).items()
+        name: score["tcav_score"] for name, score in fastcav.get("concepts", {}).items()
     }
 
     blank = np.zeros((8, 8, 3), dtype=np.uint8)

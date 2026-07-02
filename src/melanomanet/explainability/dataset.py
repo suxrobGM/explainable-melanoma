@@ -34,14 +34,10 @@ class ConceptDataset(Dataset):
         image_extensions = {".jpg", ".jpeg", ".png", ".bmp"}
 
         self.positive_paths = [
-            p
-            for p in self.positive_dir.iterdir()
-            if p.suffix.lower() in image_extensions
+            p for p in self.positive_dir.iterdir() if p.suffix.lower() in image_extensions
         ]
         self.negative_paths = [
-            p
-            for p in self.negative_dir.iterdir()
-            if p.suffix.lower() in image_extensions
+            p for p in self.negative_dir.iterdir() if p.suffix.lower() in image_extensions
         ]
 
         self.all_paths = self.positive_paths + self.negative_paths

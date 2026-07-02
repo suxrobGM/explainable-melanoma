@@ -93,14 +93,11 @@ def evaluate(config: Config, checkpoint_path: str) -> dict:
         class_names=np.array(class_names),
     )
     console.print(
-        f"[green]Per-sample predictions saved to "
-        f"{output_dir / 'eval_predictions.npz'}[/green]"
+        f"[green]Per-sample predictions saved to {output_dir / 'eval_predictions.npz'}[/green]"
     )
 
     if config.evaluation.save_confusion_matrix:
-        plot_confusion_matrix(
-            y_true, y_pred, class_names, output_dir / "confusion_matrix.png"
-        )
+        plot_confusion_matrix(y_true, y_pred, class_names, output_dir / "confusion_matrix.png")
     if metrics["per_class_auc"] is not None:
         plot_roc_curves(
             y_true,

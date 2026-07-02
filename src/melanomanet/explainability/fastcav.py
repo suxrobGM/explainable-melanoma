@@ -54,9 +54,7 @@ class FastCAV:
         self.model = model
         self.concepts_dir = Path(concepts_dir)
         self.target_layer = target_layer
-        self.device = device or torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu"
-        )
+        self.device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self.model.to(self.device)
         self.model.eval()
@@ -81,9 +79,7 @@ class FastCAV:
                         concepts.append(concept_dir.name)
         return concepts
 
-    def _extract_features(
-        self, dataloader: DataLoader
-    ) -> tuple[np.ndarray, np.ndarray]:
+    def _extract_features(self, dataloader: DataLoader) -> tuple[np.ndarray, np.ndarray]:
         """Extract features from model for a dataset."""
         all_features = []
         all_labels = []
@@ -125,8 +121,7 @@ class FastCAV:
         """
         if concept_name not in self.available_concepts:
             raise ValueError(
-                f"Concept '{concept_name}' not found. "
-                f"Available: {self.available_concepts}"
+                f"Concept '{concept_name}' not found. Available: {self.available_concepts}"
             )
 
         concept_dir = self.concepts_dir / concept_name
@@ -303,9 +298,7 @@ class FastCAV:
         # Compute TCAV scores for real CAV
         real_scores = []
         for i in range(images.size(0)):
-            score = self.compute_tcav_score(
-                images[i : i + 1], concept_name, target_class
-            )
+            score = self.compute_tcav_score(images[i : i + 1], concept_name, target_class)
             real_scores.append(score)
         mean_real_score = np.mean(real_scores)
 
@@ -322,9 +315,7 @@ class FastCAV:
 
             run_scores = []
             for i in range(images.size(0)):
-                score = self.compute_tcav_score(
-                    images[i : i + 1], concept_name, target_class
-                )
+                score = self.compute_tcav_score(images[i : i + 1], concept_name, target_class)
                 run_scores.append(score)
             random_scores.append(np.mean(run_scores))
 

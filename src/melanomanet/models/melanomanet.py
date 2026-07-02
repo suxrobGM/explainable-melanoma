@@ -52,25 +52,13 @@ class MelanomaNet(nn.Module):
     def _init_efficientnet(self, backbone: str, pretrained: bool) -> None:
         """Initialize EfficientNet V2 backbone."""
         if backbone == "efficientnet_v2_s":
-            weights = (
-                tv_models.EfficientNet_V2_S_Weights.IMAGENET1K_V1
-                if pretrained
-                else None
-            )
+            weights = tv_models.EfficientNet_V2_S_Weights.IMAGENET1K_V1 if pretrained else None
             model = tv_models.efficientnet_v2_s(weights=weights)
         elif backbone == "efficientnet_v2_m":
-            weights = (
-                tv_models.EfficientNet_V2_M_Weights.IMAGENET1K_V1
-                if pretrained
-                else None
-            )
+            weights = tv_models.EfficientNet_V2_M_Weights.IMAGENET1K_V1 if pretrained else None
             model = tv_models.efficientnet_v2_m(weights=weights)
         elif backbone == "efficientnet_v2_l":
-            weights = (
-                tv_models.EfficientNet_V2_L_Weights.IMAGENET1K_V1
-                if pretrained
-                else None
-            )
+            weights = tv_models.EfficientNet_V2_L_Weights.IMAGENET1K_V1 if pretrained else None
             model = tv_models.efficientnet_v2_l(weights=weights)
         else:
             raise ValueError(
@@ -129,9 +117,7 @@ class MelanomaNet(nn.Module):
         mean_probs = probs_stack.mean(dim=0)
 
         # Predictive uncertainty (entropy of mean prediction)
-        predictive_entropy = -torch.sum(
-            mean_probs * torch.log(mean_probs + 1e-10), dim=-1
-        )
+        predictive_entropy = -torch.sum(mean_probs * torch.log(mean_probs + 1e-10), dim=-1)
 
         # Epistemic uncertainty (mutual information / variance)
         epistemic_uncertainty = probs_stack.var(dim=0).mean(dim=-1)

@@ -98,7 +98,7 @@ install-cpu = { cmd = "uv sync --extra cpu", help = "Sync with CPU-only PyTorch"
 install-gpu = { cmd = "uv sync --extra gpu", help = "Sync with CUDA 13.0 PyTorch" }
 
 [tool.ruff]
-line-length = 88
+line-length = 100
 target-version = "py314"
 
 [tool.ruff.lint]

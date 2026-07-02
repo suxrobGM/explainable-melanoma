@@ -72,9 +72,7 @@ def extract_lesion_mask(image: np.ndarray) -> np.ndarray:
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 
     # Find largest connected component (remove small artifacts)
-    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(
-        mask, connectivity=8
-    )
+    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
 
     if num_labels > 1:
         # Get largest component (excluding background at index 0)

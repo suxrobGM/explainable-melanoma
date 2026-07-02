@@ -55,9 +55,7 @@ def _plot_image_row(fig, gs, data: PaperFigureData) -> None:
 
     ax3 = fig.add_subplot(gs[0, 2])
     ax3.imshow(data.overlay)
-    ax3.set_title(
-        f"{data.prediction} ({data.confidence:.1%})", fontsize=10, fontweight="bold"
-    )
+    ax3.set_title(f"{data.prediction} ({data.confidence:.1%})", fontsize=10, fontweight="bold")
     ax3.axis("off")
 
     ax_risk = fig.add_subplot(gs[0, 3])
@@ -97,9 +95,7 @@ def _plot_abcde_row(fig, gs, data: PaperFigureData) -> None:
         ax = fig.add_subplot(gs[1, i])
         ax.imshow(img)
         color, status = _get_status_color(is_flagged)
-        ax.set_title(
-            f"{label} [{status}] {detail}", fontsize=10, color=color, fontweight="bold"
-        )
+        ax.set_title(f"{label} [{status}] {detail}", fontsize=10, color=color, fontweight="bold")
         ax.axis("off")
 
 
@@ -147,9 +143,7 @@ def _plot_fastcav_bar(ax, data: PaperFigureData) -> None:
     """Plot FastCAV concept importance bar chart."""
     if not data.concepts or not data.scores:
         ax.text(0.5, 0.5, "No FastCAV data", ha="center", va="center")
-        ax.set_title(
-            f"Concept Influence → {data.prediction}", fontsize=10, fontweight="bold"
-        )
+        ax.set_title(f"Concept Influence → {data.prediction}", fontsize=10, fontweight="bold")
         return
 
     sorted_pairs = sorted(
@@ -199,14 +193,10 @@ def _plot_fastcav_bar(ax, data: PaperFigureData) -> None:
                 fontsize=8,
             )
 
-    ax.set_title(
-        f"Concept Influence → {data.prediction}", fontsize=10, fontweight="bold"
-    )
+    ax.set_title(f"Concept Influence → {data.prediction}", fontsize=10, fontweight="bold")
 
 
-def create_paper_figure(
-    data: PaperFigureData, output_path: Path, dpi: int = 300
-) -> None:
+def create_paper_figure(data: PaperFigureData, output_path: Path, dpi: int = 300) -> None:
     """Create a paper-ready combined figure.
 
     Args:

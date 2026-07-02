@@ -133,9 +133,7 @@ def evaluate_faithfulness(
 
         attention = gradcam.generate_attention_map(x, target_class)  # (H, W) [0,1]
         if attention.shape != (img_size, img_size):
-            attention = np.asarray(
-                Image.fromarray(attention).resize((img_size, img_size))
-            )
+            attention = np.asarray(Image.fromarray(attention).resize((img_size, img_size)))
 
         random_attention = rng.random(attention.shape)
         gc_order = np.argsort(attention.ravel())[::-1]
@@ -149,9 +147,7 @@ def evaluate_faithfulness(
             ("gradcam", gc_order, attention),
             ("random", rnd_order, random_attention),
         ):
-            del_curve = _probability_curve(
-                model, x, order, target_class, device, "deletion", steps
-            )
+            del_curve = _probability_curve(model, x, order, target_class, device, "deletion", steps)
             ins_curve = _probability_curve(
                 model, x, order, target_class, device, "insertion", steps
             )

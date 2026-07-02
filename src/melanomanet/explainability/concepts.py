@@ -39,9 +39,7 @@ CONCEPTS = {
 }
 
 
-def analyze_image_abcde(
-    image_path: Path, analyzer: ABCDEAnalyzer
-) -> dict[str, Any] | None:
+def analyze_image_abcde(image_path: Path, analyzer: ABCDEAnalyzer) -> dict[str, Any] | None:
     """
     Analyze a single image using ABCDE criteria.
 
@@ -72,9 +70,7 @@ def analyze_image_abcde(
             "diameter_flag": result["flags"]["diameter_flag"],
         }
     except Exception as e:
-        console.print(
-            f"[yellow]Warning: Failed to analyze {image_path.name}: {e}[/yellow]"
-        )
+        console.print(f"[yellow]Warning: Failed to analyze {image_path.name}: {e}[/yellow]")
         return None
 
 
@@ -149,9 +145,7 @@ def generate_concept_dataset(
         positive_df = results_df[flags]
         negative_df = results_df[~flags]
 
-        console.print(
-            f"  Raw counts: {len(positive_df)} positive, {len(negative_df)} negative"
-        )
+        console.print(f"  Raw counts: {len(positive_df)} positive, {len(negative_df)} negative")
 
         if len(positive_df) < min_samples_per_class:
             console.print(
@@ -185,9 +179,7 @@ def generate_concept_dataset(
 
     # Save analysis results for reference
     results_df.to_csv(output_dir / "abcde_analysis.csv", index=False)
-    console.print(
-        f"\n[bold green]Concept datasets created at: {output_dir}[/bold green]"
-    )
+    console.print(f"\n[bold green]Concept datasets created at: {output_dir}[/bold green]")
     console.print(f"Analysis results saved to: {output_dir / 'abcde_analysis.csv'}")
 
     # Print summary
@@ -197,6 +189,4 @@ def generate_concept_dataset(
         if concept_dir.exists():
             pos_count = len(list((concept_dir / "positive").glob("*")))
             neg_count = len(list((concept_dir / "negative").glob("*")))
-            console.print(
-                f"  {concept_name}: {pos_count} positive, {neg_count} negative"
-            )
+            console.print(f"  {concept_name}: {pos_count} positive, {neg_count} negative")

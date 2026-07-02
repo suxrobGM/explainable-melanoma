@@ -70,9 +70,7 @@ class FocalLoss(nn.Module):
             return focal_loss
 
 
-def create_criterion(
-    training: TrainingConfig, class_weights: torch.Tensor
-) -> nn.Module:
+def create_criterion(training: TrainingConfig, class_weights: torch.Tensor) -> nn.Module:
     """
     Create loss criterion based on configuration.
 

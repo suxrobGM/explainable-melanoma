@@ -59,9 +59,7 @@ def run_inference(
     console.print(f"[bold green]Confidence: {confidence:.4f}[/bold green]")
 
     # Run analyses
-    uncertainty = run_uncertainty_analysis(
-        model, image_tensor, config.uncertainty, device
-    )
+    uncertainty = run_uncertainty_analysis(model, image_tensor, config.uncertainty, device)
     fastcav = run_fastcav_analysis(
         model, image_tensor, pred_class, class_names[pred_class], config.fastcav, device
     )
