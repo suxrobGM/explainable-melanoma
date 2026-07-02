@@ -8,19 +8,20 @@ from pathlib import Path
 import numpy as np
 import torch
 from PIL import Image
-from rich.console import Console
 
+from ..config import Config
 from ..models.melanomanet import MelanomaNet, create_model
 from ..utils.checkpoint import load_checkpoint
+from ..utils.console import console
 
-console = Console()
 
-
-def load_model(config: dict, checkpoint_path: str, device: torch.device) -> MelanomaNet:
+def load_model(
+    config: Config, checkpoint_path: str, device: torch.device
+) -> MelanomaNet:
     """Load model from checkpoint.
 
     Args:
-        config: Configuration dictionary
+        config: Configuration
         checkpoint_path: Path to model checkpoint
         device: Device to load model on
 
@@ -28,8 +29,16 @@ def load_model(config: dict, checkpoint_path: str, device: torch.device) -> Mela
         Loaded and evaluated model
     """
     console.print(f"[bold]Loading model from {checkpoint_path}...[/bold]")
-    model = create_model(config).to(device)
-    load_checkpoint(Path(checkpoint_path), model, device=device)
+    model = create_model(config.model, config.data.num_classes).to(device)
+    checkpoint = load_checkpoint(Path(checkpoint_path), model, device=device)
+
+    epoch = checkpoint.get("epoch")
+    f1 = checkpoint.get("metrics", {}).get("f1")
+    if epoch is not None:
+        console.print(f"[green]Loaded checkpoint from epoch {epoch}[/green]")
+    if f1 is not None:
+        console.print(f"[green]Model F1 score: {f1:.4f}[/green]")
+
     model.eval()
     return model
 

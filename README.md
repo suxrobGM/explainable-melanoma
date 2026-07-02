@@ -87,6 +87,9 @@ The pretrained MelanomaNet model can be downloaded from: [Google Drive](https://
 
 ## Usage
 
+All workflows are subcommands of the `melanoma` CLI (`uv run melanoma --help`);
+the `poe` tasks below are thin aliases for them (e.g. `poe train` == `uv run melanoma train`).
+
 ### Training
 
 ```bash
@@ -116,6 +119,14 @@ poe infer
 
 # Run inference on a directory of images
 poe infer --input-dir path/to/images/ --config config.yaml
+```
+
+Besides the visualization PNG and text report, each inference saves structured
+artifacts (`<image>_result.json` + `<image>_result_panels.npz`). Paper-ready
+figures are rendered from those artifacts:
+
+```bash
+poe paper-figures
 ```
 
 ### FastCAV Concept Training

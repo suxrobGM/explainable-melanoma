@@ -5,13 +5,11 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-from rich.console import Console
 
 from ..explainability.models import FastCAVResult
 from ..uncertainty.models import UncertaintyResult
+from ..utils.console import console
 from .models import InferenceResult
-
-console = Console()
 
 
 def create_uncertainty_text(result: UncertaintyResult) -> tuple[str, str]:

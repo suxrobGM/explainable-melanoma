@@ -13,7 +13,6 @@ from typing import Any
 
 import numpy as np
 import torch
-from rich.console import Console
 from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn
 from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import train_test_split
@@ -21,10 +20,9 @@ from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader
 
 from ..models.melanomanet import MelanomaNet
+from ..utils.console import console
 from .dataset import ConceptDataset
 from .models import ConceptScore, FastCAVResult
-
-console = Console()
 
 
 class FastCAV:

@@ -3,13 +3,10 @@
 
 from pathlib import Path
 
-from rich.console import Console
-
 from ..abcde import create_abcde_report
 from ..explainability import create_fastcav_report
+from ..utils.console import console
 from .models import InferenceResult
-
-console = Console()
 
 
 def save_report(

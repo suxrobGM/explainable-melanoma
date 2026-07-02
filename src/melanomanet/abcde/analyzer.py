@@ -29,7 +29,7 @@ class ABCDEAnalyzer:
         asymmetry_threshold: float = 0.3,
         border_threshold: float = 0.4,
         color_threshold: int = 3,
-        diameter_threshold_px: int = 50,
+        diameter_threshold_px: float = 50,
     ):
         self.asymmetry_threshold = asymmetry_threshold
         self.border_threshold = border_threshold

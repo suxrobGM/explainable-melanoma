@@ -60,7 +60,7 @@ expected consequence of the class imbalance rather than a separate finding.
         \bottomrule
     \end{tabular}
     % Balanced accuracy = macro recall (Table 3). ROC-AUC produced by
-    % scripts/eval.py; fill in after regenerating with saved probabilities.
+    % `melanoma eval`; fill in after regenerating with saved probabilities.
 \end{table}
 
 Table \ref{tab:perclass} provides the per-class breakdown, including the
@@ -92,7 +92,7 @@ recall is 63.85\%.
         Macro avg & 0.8000    & 0.8167 & 0.8036 & [TODO]       & 3800    \\
         \bottomrule
     \end{tabular}
-    % Specificity and per-class AUC produced by scripts/eval.py from saved
+    % Specificity and per-class AUC produced by `melanoma eval` from saved
     % probabilities; fill in after regenerating.
 \end{table}
 
@@ -167,7 +167,7 @@ we record how quickly the predicted probability falls (or rises). Summarised as
 the area over the probability curve, GradCAM++ yields a deletion score of
 \textbf{[TODO]} and an insertion score of \textbf{[TODO]}, compared with
 \textbf{[TODO]} and \textbf{[TODO]} for random attention.%
-% Numbers produced by scripts/eval_faithfulness.py; fill in after the run.
+% Numbers produced by `melanoma faithfulness`; fill in after the run.
 The gap over the random control is the evidence that the maps reflect the
 model's computation rather than incidental structure in the image.
 

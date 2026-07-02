@@ -3,12 +3,15 @@
 
 """Paper-ready figure generation for reports."""
 
-from dataclasses import dataclass
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.gridspec import GridSpec
+
+from ..utils.console import console
+from .artifacts import image_id_from, iter_artifact_jsons, load_paper_figure_data
+from .models import PaperFigureData
 
 # Paper style settings
 PAPER_STYLE = {
@@ -33,40 +36,6 @@ CONCEPT_ABBREV = {
 RISK_COLORS = {"Low": "#55A868", "Medium": "#FFA500", "High": "#C44E52"}
 
 
-@dataclass
-class PaperFigureData:
-    """Data container for paper figure generation."""
-
-    prediction: str
-    confidence: float
-    risk_level: str
-
-    # Images (as numpy arrays)
-    original: np.ndarray
-    gradcam: np.ndarray
-    overlay: np.ndarray
-    asymmetry_img: np.ndarray
-    border_img: np.ndarray
-    color_img: np.ndarray
-    diameter_img: np.ndarray
-
-    # ABCDE scores
-    asymmetry_score: float
-    border_score: float
-    n_colors: int
-    diameter: float
-
-    # Uncertainty
-    predictive_unc: float
-    epistemic_unc: float
-    aleatoric_unc: float
-    is_reliable: bool
-
-    # FastCAV
-    concepts: list[str]
-    scores: list[float]
-
-
 def _get_status_color(is_flagged: bool) -> tuple[str, str]:
     """Get status indicator and color."""
     return ("red", "!") if is_flagged else ("green", "OK")
@@ -80,7 +49,7 @@ def _plot_image_row(fig, gs, data: PaperFigureData) -> None:
     ax1.axis("off")
 
     ax2 = fig.add_subplot(gs[0, 1])
-    ax2.imshow(data.gradcam)
+    ax2.imshow(data.gradcam, cmap="jet")
     ax2.set_title("GradCAM++", fontsize=10)
     ax2.axis("off")
 
@@ -115,38 +84,16 @@ def _plot_image_row(fig, gs, data: PaperFigureData) -> None:
 
 def _plot_abcde_row(fig, gs, data: PaperFigureData) -> None:
     """Plot ABCDE criterion visualizations."""
+    # Flags come from the saved artifacts, i.e. from ABCDEAnalyzer with the
+    # configured thresholds — not re-derived here.
     criteria = [
-        (
-            data.asymmetry_img,
-            "A",
-            data.asymmetry_score,
-            data.asymmetry_score > 0.3,
-            f"{data.asymmetry_score:.2f}",
-        ),
-        (
-            data.border_img,
-            "B",
-            data.border_score,
-            data.border_score > 0.4,
-            f"{data.border_score:.2f}",
-        ),
-        (
-            data.color_img,
-            "C",
-            data.n_colors,
-            data.n_colors > 3,
-            f"{data.n_colors} colors",
-        ),
-        (
-            data.diameter_img,
-            "D",
-            data.diameter,
-            data.diameter > 114,
-            f"{data.diameter:.0f}px",
-        ),
+        (data.asymmetry_img, "A", data.asymmetry_flag, f"{data.asymmetry_score:.2f}"),
+        (data.border_img, "B", data.border_flag, f"{data.border_score:.2f}"),
+        (data.color_img, "C", data.color_flag, f"{data.n_colors} colors"),
+        (data.diameter_img, "D", data.diameter_flag, f"{data.diameter:.0f}px"),
     ]
 
-    for i, (img, label, _, is_flagged, detail) in enumerate(criteria):
+    for i, (img, label, is_flagged, detail) in enumerate(criteria):
         ax = fig.add_subplot(gs[1, i])
         ax.imshow(img)
         color, status = _get_status_color(is_flagged)
@@ -285,3 +232,29 @@ def create_paper_figure(
 
     fig.savefig(output_path, dpi=dpi, bbox_inches="tight", facecolor="white")
     plt.close(fig)
+
+
+def generate_paper_figures(output_dir: Path, paper_output_dir: Path) -> None:
+    """Render a paper figure for every saved inference artifact.
+
+    Consumes the JSON + panels-npz pairs written by ``run_inference``.
+    """
+    paper_output_dir.mkdir(parents=True, exist_ok=True)
+
+    json_files = iter_artifact_jsons(output_dir)
+    if not json_files:
+        console.print(
+            f"[yellow]No inference artifacts found in {output_dir}. "
+            f"Run 'melanoma infer' first.[/yellow]"
+        )
+        return
+
+    for json_file in json_files:
+        data = load_paper_figure_data(json_file)
+        if data is None:
+            console.print(f"[yellow]Skipping {json_file.name}: panels missing[/yellow]")
+            continue
+
+        output_path = paper_output_dir / f"{image_id_from(json_file)}_paper.png"
+        create_paper_figure(data, output_path)
+        console.print(f"[green]Generated: {output_path}[/green]")

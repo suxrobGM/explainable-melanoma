@@ -5,6 +5,8 @@ import torch
 import torch.nn as nn
 import torchvision.models as tv_models
 
+from ..config import ModelConfig
+
 
 class MelanomaNet(nn.Module):
     """
@@ -164,23 +166,20 @@ class MelanomaNet(nn.Module):
         return pooled
 
 
-def create_model(config: dict) -> MelanomaNet:
+def create_model(model: ModelConfig, num_classes: int) -> MelanomaNet:
     """
     Factory function to create MelanomaNet model from config.
 
     Args:
-        config: Configuration dictionary
+        model: Model configuration
+        num_classes: Number of output classes
 
     Returns:
         Initialized MelanomaNet model
     """
-    model_config = config.get("model", {})
-
-    model = MelanomaNet(
-        backbone=model_config.get("backbone", "efficientnet_v2_m"),
-        num_classes=config["data"]["num_classes"],
-        pretrained=model_config.get("pretrained", True),
-        dropout_rate=model_config.get("dropout_rate", 0.3),
+    return MelanomaNet(
+        backbone=model.backbone,
+        num_classes=num_classes,
+        pretrained=model.pretrained,
+        dropout_rate=model.dropout_rate,
     )
-
-    return model

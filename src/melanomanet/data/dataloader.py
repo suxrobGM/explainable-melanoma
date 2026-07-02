@@ -2,13 +2,13 @@
 # Date: 2025-12-09
 
 from pathlib import Path
-from typing import Any
 
 import pandas as pd
 import torch
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 
+from ..config import Config
 from .dataset import MelanomaDataset, get_class_weights
 from .transforms import get_train_transforms, get_val_transforms
 
@@ -65,7 +65,7 @@ def prepare_isic2019_labels(data_dir: str) -> pd.DataFrame:
 
 
 def create_data_loaders(
-    config: dict[str, Any],
+    config: Config,
 ) -> tuple[DataLoader, DataLoader, DataLoader, torch.Tensor]:
     """
     Create train, validation, and test data loaders.
@@ -73,40 +73,34 @@ def create_data_loaders(
     Performs stratified split to maintain class balance across splits.
 
     Args:
-        config: Configuration dictionary
+        config: Configuration
 
     Returns:
         Tuple of (train_loader, val_loader, test_loader, class_weights)
     """
     # Load labels for ISIC2019
-    data_dir = config["data"]["data_dir"]
-    labels_df = prepare_isic2019_labels(data_dir)
-    image_dir = Path(data_dir) / "train"
+    data = config.data
+    labels_df = prepare_isic2019_labels(data.data_dir)
+    image_dir = Path(data.data_dir) / "train"
 
     # Calculate class weights
-    num_classes = config["data"]["num_classes"]
-    class_weights = get_class_weights(labels_df, num_classes)
-
-    # Stratified train/val/test split
-    train_split = config["data"]["train_split"]
-    val_split = config["data"]["val_split"]
-    test_split = config["data"]["test_split"]
+    class_weights = get_class_weights(labels_df, data.num_classes)
 
     # First split: train vs (val + test)
     train_df, temp_df = train_test_split(
         labels_df,
-        train_size=train_split,
+        train_size=data.train_split,
         stratify=labels_df["target"],
-        random_state=config["seed"],
+        random_state=config.seed,
     )
 
     # Second split: val vs test
-    val_ratio = val_split / (val_split + test_split)
+    val_ratio = data.val_split / (data.val_split + data.test_split)
     val_df, test_df = train_test_split(
         temp_df,
         train_size=val_ratio,
         stratify=temp_df["target"],
-        random_state=config["seed"],
+        random_state=config.seed,
     )
 
     print("\nDataset splits:")
@@ -115,16 +109,18 @@ def create_data_loaders(
     print(f"Test: {len(test_df)} images")
 
     # Create datasets
-    train_transforms = get_train_transforms(config)
-    val_transforms = get_val_transforms(config)
+    train_transforms = get_train_transforms(
+        data.image_size, config.training.augmentation
+    )
+    val_transforms = get_val_transforms(data.image_size)
 
     train_dataset = MelanomaDataset(image_dir, train_df, train_transforms)
     val_dataset = MelanomaDataset(image_dir, val_df, val_transforms)
     test_dataset = MelanomaDataset(image_dir, test_df, val_transforms)
 
     # Create data loaders
-    batch_size = config["training"]["batch_size"]
-    num_workers = config["data"]["num_workers"]
+    batch_size = config.training.batch_size
+    num_workers = data.num_workers
 
     train_loader = DataLoader(
         train_dataset,

@@ -18,6 +18,7 @@ from pytorch_grad_cam import GradCAMPlusPlus
 from pytorch_grad_cam.utils.image import show_cam_on_image
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 
+from ..data.transforms import IMAGENET_MEAN, IMAGENET_STD
 from ..models.melanomanet import MelanomaNet
 
 
@@ -161,9 +162,9 @@ def denormalize_image(
         Denormalized numpy array (H, W, 3) with values [0, 1]
     """
     if mean is None:
-        mean = [0.485, 0.456, 0.406]
+        mean = IMAGENET_MEAN
     if std is None:
-        std = [0.229, 0.224, 0.225]
+        std = IMAGENET_STD
 
     if image.ndim == 4:
         image = image.squeeze(0)

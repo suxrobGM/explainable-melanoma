@@ -4,15 +4,10 @@ These guard the ROC-AUC, sensitivity, and specificity additions used to
 generate the paper's evaluation tables.
 """
 
-import sys
-from pathlib import Path
-
 import numpy as np
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-
-from melanomanet.utils.metrics import MetricsTracker  # noqa: E402
+from melanomanet.utils.metrics import MetricsTracker
 
 
 def test_perfect_prediction_gives_unit_scores():

@@ -1,13 +1,18 @@
 # Author: Sukhrobbek Ilyosbekov
 # Date: 2025-12-09
 
-from typing import Any
-
 import torchvision.transforms as T
 from torchvision.transforms import InterpolationMode
 
+from ..config import AugmentationConfig
 
-def get_train_transforms(config: dict[str, Any]) -> T.Compose:
+IMAGENET_MEAN = [0.485, 0.456, 0.406]
+IMAGENET_STD = [0.229, 0.224, 0.225]
+
+
+def get_train_transforms(
+    image_size: int, augmentation: AugmentationConfig
+) -> T.Compose:
     """
     Get training transforms with augmentation.
 
@@ -17,28 +22,26 @@ def get_train_transforms(config: dict[str, Any]) -> T.Compose:
     - Normalization: ImageNet statistics
 
     Args:
-        config: Configuration dictionary with augmentation parameters
+        image_size: Target square image size
+        augmentation: Augmentation parameters
 
     Returns:
         Composed transforms for training
     """
-    image_size = config["data"]["image_size"]
-    aug_config = config["training"]["augmentation"]
-
     transforms = [
         # Resize to square
         T.Resize((image_size, image_size), interpolation=InterpolationMode.BILINEAR),
         # Geometric augmentation
-        T.RandomHorizontalFlip(p=aug_config["horizontal_flip"]),
-        T.RandomVerticalFlip(p=aug_config["vertical_flip"]),
+        T.RandomHorizontalFlip(p=augmentation.horizontal_flip),
+        T.RandomVerticalFlip(p=augmentation.vertical_flip),
         T.RandomRotation(
-            degrees=aug_config["rotation_degrees"],
+            degrees=augmentation.rotation_degrees,
             interpolation=InterpolationMode.BILINEAR,
         ),
     ]
 
     # Optional affine transformation
-    if aug_config.get("random_affine", False):
+    if augmentation.random_affine:
         transforms.append(
             T.RandomAffine(
                 degrees=0,
@@ -49,46 +52,43 @@ def get_train_transforms(config: dict[str, Any]) -> T.Compose:
         )
 
     # Color augmentation
-    color_jitter = aug_config.get("color_jitter", {})
-    if color_jitter:
-        transforms.append(
-            T.ColorJitter(
-                brightness=color_jitter.get("brightness", 0.2),
-                contrast=color_jitter.get("contrast", 0.2),
-                saturation=color_jitter.get("saturation", 0.2),
-                hue=color_jitter.get("hue", 0.1),
-            )
+    jitter = augmentation.color_jitter
+    transforms.append(
+        T.ColorJitter(
+            brightness=jitter.brightness,
+            contrast=jitter.contrast,
+            saturation=jitter.saturation,
+            hue=jitter.hue,
         )
+    )
 
     # Normalize and convert to tensor
     transforms.extend(
         [
             T.ToTensor(),
-            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            T.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
         ]
     )
 
     return T.Compose(transforms)
 
 
-def get_val_transforms(config: dict[str, Any]) -> T.Compose:
+def get_val_transforms(image_size: int) -> T.Compose:
     """
     Get validation/test transforms without augmentation.
 
     Args:
-        config: Configuration dictionary
+        image_size: Target square image size
 
     Returns:
         Composed transforms for validation/testing
     """
-    image_size = config["data"]["image_size"]
-
     return T.Compose(
         [
             T.Resize(
                 (image_size, image_size), interpolation=InterpolationMode.BILINEAR
             ),
             T.ToTensor(),
-            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            T.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
         ]
     )

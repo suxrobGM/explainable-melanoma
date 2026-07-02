@@ -5,6 +5,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from ..config import TrainingConfig
+
 
 class FocalLoss(nn.Module):
     """
@@ -68,29 +70,25 @@ class FocalLoss(nn.Module):
             return focal_loss
 
 
-def create_criterion(config: dict, class_weights: torch.Tensor) -> nn.Module:
+def create_criterion(
+    training: TrainingConfig, class_weights: torch.Tensor
+) -> nn.Module:
     """
     Create loss criterion based on configuration.
 
     Args:
-        config: Configuration dictionary
+        training: Training configuration
         class_weights: Class weights for imbalanced dataset
 
     Returns:
         Loss criterion module
     """
     criterion: nn.Module
-    if config["training"].get("focal_loss", False):
-        # Focal loss
-        criterion = FocalLoss(
-            alpha=config["training"]["focal_alpha"],
-            gamma=config["training"]["focal_gamma"],
-        )
+    if training.focal_loss:
+        criterion = FocalLoss(alpha=training.focal_alpha, gamma=training.focal_gamma)
+    elif training.use_class_weights:
+        criterion = nn.CrossEntropyLoss(weight=class_weights)
     else:
-        # Weighted cross entropy
-        if config["training"]["use_class_weights"]:
-            criterion = nn.CrossEntropyLoss(weight=class_weights)
-        else:
-            criterion = nn.CrossEntropyLoss()
+        criterion = nn.CrossEntropyLoss()
 
     return criterion

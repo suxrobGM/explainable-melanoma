@@ -14,36 +14,25 @@ merely looking plausible, using three measures with a random-attention control:
 
 A random heatmap is scored identically to establish the baseline each real
 measure must beat.
-
-Usage:
-    python scripts/eval_faithfulness.py --checkpoint checkpoints/best_model.pth \
-        --input-dir data/sample_images --config config.yaml
 """
 
 import json
-import sys
 from pathlib import Path
-from typing import Annotated
 
 import numpy as np
 import torch
 import torch.nn.functional as F
-import typer
-import yaml
 from PIL import Image
-from rich.console import Console
 from rich.table import Table
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-
-from melanomanet.abcde.segmentation import extract_lesion_mask  # noqa: E402
-from melanomanet.data.transforms import get_val_transforms  # noqa: E402
-from melanomanet.inference.loaders import load_model  # noqa: E402
-from melanomanet.utils.gradcam import MelanomaGradCAM  # noqa: E402
-
-console = Console()
-
-_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp"}
+from ..abcde.segmentation import extract_lesion_mask
+from ..config import Config
+from ..data.transforms import get_val_transforms
+from ..inference.loaders import load_model
+from ..utils.console import console
+from ..utils.env import resolve_device
+from ..utils.gradcam import MelanomaGradCAM
+from ..utils.images import iter_image_files
 
 
 def _probability_curve(
@@ -92,12 +81,13 @@ def _probability_curve(
     return probs.cpu().numpy()
 
 
-def _aopc(curve: np.ndarray, mode: str) -> float:
-    """Area over the curve summarizing a deletion/insertion sweep."""
-    if mode == "deletion":
-        # Drop from the starting probability as pixels are removed.
-        return float(np.mean(curve[0] - curve))
-    # Rise from the blank-baseline probability as pixels are added.
+def _deletion_aopc(curve: np.ndarray) -> float:
+    """Mean drop from the starting probability as pixels are removed."""
+    return float(np.mean(curve[0] - curve))
+
+
+def _insertion_aopc(curve: np.ndarray) -> float:
+    """Mean rise from the blank-baseline probability as pixels are added."""
     return float(np.mean(curve - curve[0]))
 
 
@@ -112,7 +102,7 @@ def _iou(attention: np.ndarray, lesion_mask: np.ndarray, quantile: float) -> flo
 
 
 def evaluate_faithfulness(
-    config_path: str,
+    config: Config,
     checkpoint_path: str,
     input_dir: str,
     steps: int,
@@ -120,20 +110,15 @@ def evaluate_faithfulness(
     seed: int,
 ) -> None:
     """Score GradCAM++ faithfulness against a random-attention control."""
-    with open(config_path) as f:
-        config = yaml.safe_load(f)
-
-    device = torch.device(config["device"] if torch.cuda.is_available() else "cpu")
-    img_size = config["data"]["image_size"]
-    transform = get_val_transforms(config)
+    device = resolve_device(config.device)
+    img_size = config.data.image_size
+    transform = get_val_transforms(img_size)
 
     model = load_model(config, checkpoint_path, device)
     gradcam = MelanomaGradCAM(model, device=device)
     rng = np.random.default_rng(seed)
 
-    image_paths = sorted(
-        p for p in Path(input_dir).iterdir() if p.suffix.lower() in _IMAGE_EXTS
-    )
+    image_paths = list(iter_image_files(Path(input_dir)))
     if not image_paths:
         console.print(f"[red]No images found in {input_dir}[/red]")
         return
@@ -170,8 +155,8 @@ def evaluate_faithfulness(
             ins_curve = _probability_curve(
                 model, x, order, target_class, device, "insertion", steps
             )
-            row[f"{label}_deletion_aopc"] = _aopc(del_curve, "deletion")
-            row[f"{label}_insertion_aopc"] = _aopc(ins_curve, "insertion")
+            row[f"{label}_deletion_aopc"] = _deletion_aopc(del_curve)
+            row[f"{label}_insertion_aopc"] = _insertion_aopc(ins_curve)
             row[f"{label}_lesion_iou"] = _iou(attn, lesion_mask, iou_quantile)
         rows.append(row)
         console.print(
@@ -180,17 +165,13 @@ def evaluate_faithfulness(
             f"iou={row['gradcam_lesion_iou']:.3f}"
         )
 
-    _report(rows, Path(config["paths"]["output_dir"]))
+    _report(rows, Path(config.paths.output_dir))
 
 
 def _report(rows: list[dict], output_dir: Path) -> None:
     """Print mean GradCAM vs random and persist per-image results."""
     output_dir.mkdir(parents=True, exist_ok=True)
-    metric_keys = [
-        "deletion_aopc",
-        "insertion_aopc",
-        "lesion_iou",
-    ]
+    metric_keys = ["deletion_aopc", "insertion_aopc", "lesion_iou"]
 
     table = Table(title=f"Faithfulness over {len(rows)} images (mean)")
     table.add_column("Metric", style="cyan")
@@ -210,29 +191,3 @@ def _report(rows: list[dict], output_dir: Path) -> None:
     with open(out_path, "w") as f:
         json.dump({"summary": summary, "per_image": rows}, f, indent=2)
     console.print(f"[green]Faithfulness results saved to {out_path}[/green]")
-
-
-def main(
-    config: Annotated[str, typer.Option(help="Path to config file")] = "config.yaml",
-    checkpoint: Annotated[
-        str, typer.Option(help="Path to checkpoint")
-    ] = "checkpoints/best_model.pth",
-    input_dir: Annotated[
-        str, typer.Option(help="Directory of images to evaluate")
-    ] = "data/sample_images",
-    steps: Annotated[
-        int, typer.Option(help="Points along deletion/insertion curves")
-    ] = 20,
-    iou_quantile: Annotated[
-        float, typer.Option(help="Attention quantile treated as 'high' for IoU")
-    ] = 0.8,
-    seed: Annotated[
-        int, typer.Option(help="Seed for the random-attention control")
-    ] = 25,
-):
-    """Evaluate GradCAM++ faithfulness (deletion/insertion AOPC + lesion IoU)."""
-    evaluate_faithfulness(config, checkpoint, input_dir, steps, iou_quantile, seed)
-
-
-if __name__ == "__main__":
-    typer.run(main)

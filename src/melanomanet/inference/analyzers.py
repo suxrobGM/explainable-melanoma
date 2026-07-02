@@ -8,17 +8,16 @@ from typing import Any
 
 import numpy as np
 import torch
-from rich.console import Console
 
 from ..abcde import ABCDEAnalyzer, create_abcde_report
+from ..config import ABCDEConfig, FastCAVConfig, UncertaintyConfig
 from ..explainability import FastCAV, create_fastcav_report
 from ..explainability.models import FastCAVResult
 from ..models.melanomanet import MelanomaNet
 from ..uncertainty import MCDropoutEstimator, get_uncertainty_interpretation
 from ..uncertainty.models import UncertaintyResult
+from ..utils.console import console
 from ..utils.gradcam import MelanomaGradCAM
-
-console = Console()
 
 
 def run_gradcam(
@@ -48,7 +47,7 @@ def run_gradcam(
 def run_uncertainty_analysis(
     model: MelanomaNet,
     image_tensor: torch.Tensor,
-    config: dict,
+    uncertainty: UncertaintyConfig,
     device: torch.device,
 ) -> UncertaintyResult | None:
     """Run MC Dropout uncertainty estimation.
@@ -56,23 +55,20 @@ def run_uncertainty_analysis(
     Args:
         model: MelanomaNet model
         image_tensor: Preprocessed image tensor
-        config: Configuration dictionary
+        uncertainty: Uncertainty configuration
         device: Computation device
 
     Returns:
         UncertaintyResult or None if disabled
     """
-    if not config.get("uncertainty", {}).get("enable", True):
+    if not uncertainty.enable:
         return None
 
     console.print("[cyan]Estimating prediction uncertainty (MC Dropout)...[/cyan]")
-    n_samples = config.get("uncertainty", {}).get("n_samples", 10)
-    threshold = config.get("uncertainty", {}).get("uncertainty_threshold", 0.5)
-
     estimator = MCDropoutEstimator(
         model=model,
-        n_samples=n_samples,
-        uncertainty_threshold=threshold,
+        n_samples=uncertainty.n_samples,
+        uncertainty_threshold=uncertainty.uncertainty_threshold,
         device=device,
     )
     result = estimator.estimate(image_tensor)
@@ -85,7 +81,7 @@ def run_fastcav_analysis(
     image_tensor: torch.Tensor,
     pred_class: int,
     class_name: str,
-    config: dict,
+    fastcav_config: FastCAVConfig,
     device: torch.device,
 ) -> FastCAVResult | None:
     """Run FastCAV concept analysis.
@@ -95,22 +91,18 @@ def run_fastcav_analysis(
         image_tensor: Preprocessed image tensor
         pred_class: Predicted class index
         class_name: Name of predicted class
-        config: Configuration dictionary
+        fastcav_config: FastCAV configuration
         device: Computation device
 
     Returns:
         FastCAVResult or None if disabled or CAVs not found
     """
-    if not config.get("fastcav", {}).get("enable", True):
+    if not fastcav_config.enable:
         return None
 
     console.print("[cyan]Analyzing concept importance (FastCAV)...[/cyan]")
-    concepts_dir = Path(
-        config.get("fastcav", {}).get("concepts_dir", "./data/concepts")
-    )
-    cavs_path = Path(
-        config.get("fastcav", {}).get("cavs_path", "./checkpoints/cavs.pth")
-    )
+    concepts_dir = Path(fastcav_config.concepts_dir)
+    cavs_path = Path(fastcav_config.cavs_path)
 
     if not cavs_path.exists():
         console.print(f"[yellow]Warning: CAVs not found at {cavs_path}[/yellow]")
@@ -129,36 +121,34 @@ def run_fastcav_analysis(
 def run_abcde_analysis(
     image_np: np.ndarray,
     attention_map: np.ndarray,
-    config: dict,
+    abcde: ABCDEConfig,
 ) -> tuple[dict[str, Any] | None, dict[str, float] | None]:
     """Run ABCDE criterion analysis.
 
     Args:
         image_np: Image as numpy array normalized to [0,1]
         attention_map: GradCAM attention map
-        config: Configuration dictionary
+        abcde: ABCDE configuration
 
     Returns:
         Tuple of (ABCDE result dict, alignment scores dict) or (None, None) if disabled
     """
-    if not config.get("abcde", {}).get("enable", True):
+    if not abcde.enable:
         return None, None
 
     console.print("[cyan]Performing ABCDE criterion analysis...[/cyan]")
-    abcde_config = config.get("abcde", {})
-
     analyzer = ABCDEAnalyzer(
-        asymmetry_threshold=abcde_config.get("asymmetry_threshold", 0.3),
-        border_threshold=abcde_config.get("border_threshold", 0.4),
-        color_threshold=abcde_config.get("color_threshold", 3),
-        diameter_threshold_px=abcde_config.get("diameter_threshold_px", 50),
+        asymmetry_threshold=abcde.asymmetry_threshold,
+        border_threshold=abcde.border_threshold,
+        color_threshold=abcde.color_threshold,
+        diameter_threshold_px=abcde.diameter_threshold_px,
     )
 
     image_uint8 = (image_np * 255).astype(np.uint8)
     abcde_result = analyzer.analyze_image(image_uint8, return_visualizations=True)
 
     alignment_scores = None
-    if abcde_config.get("enable_alignment_analysis", True):
+    if abcde.enable_alignment_analysis:
         alignment_scores = analyzer.align_with_gradcam(abcde_result, attention_map)
 
     console.print("\n" + create_abcde_report(abcde_result, alignment_scores))

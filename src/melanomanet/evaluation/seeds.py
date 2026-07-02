@@ -6,30 +6,22 @@ metrics from each run, and reports mean +/- 95% confidence interval. This backs
 the "mean +/- CI" columns in the paper's results table.
 
 Each seed gets its own checkpoint and output directory so runs do not clobber
-one another. Training and evaluation reuse the existing ``scripts/train.py`` and
-``scripts/eval.py`` entrypoints via subprocess; per-seed metrics are recomputed
-from the ``eval_predictions.npz`` each eval writes.
-
-Usage:
-    python scripts/run_seeds.py --config config.yaml --seeds 25,26,27
+one another. Training and evaluation run in subprocesses (``melanoma train`` /
+``melanoma eval`` via ``python -m melanomanet.cli``) so CUDA memory is fully
+released between seeds; per-seed metrics are recomputed from the
+``eval_predictions.npz`` each eval writes.
 """
 
 import subprocess
 import sys
 from pathlib import Path
-from typing import Annotated
 
 import numpy as np
-import typer
 import yaml
-from rich.console import Console
 from rich.table import Table
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-
-from melanomanet.utils.metrics import MetricsTracker  # noqa: E402
-
-console = Console()
+from ..utils.console import console
+from ..utils.metrics import MetricsTracker
 
 # t-multipliers for a two-sided 95% CI, indexed by degrees of freedom (n - 1).
 # Falls back to the normal approximation (1.96) for larger samples.
@@ -52,8 +44,9 @@ def _t_multiplier(n: int) -> float:
     return _T95.get(n - 1, 1.96)
 
 
-def _run(cmd: list[str]) -> None:
-    """Run a subprocess, streaming output, and raise on failure."""
+def _run_cli(args: list[str]) -> None:
+    """Run a melanoma CLI subcommand in a subprocess and raise on failure."""
+    cmd = [sys.executable, "-m", "melanomanet.cli", *args]
     console.print(f"[dim]$ {' '.join(cmd)}[/dim]")
     subprocess.run(cmd, check=True)
 
@@ -72,7 +65,11 @@ def run_seeds(
     output_root: Path,
     skip_training: bool,
 ) -> None:
-    """Train/evaluate across seeds and aggregate the test metrics."""
+    """Train/evaluate across seeds and aggregate the test metrics.
+
+    Per-seed configs are derived from the raw YAML mapping (seed and artifact
+    paths overridden) so the child processes validate them via load_config.
+    """
     with open(config_path) as f:
         base_config = yaml.safe_load(f)
 
@@ -102,19 +99,16 @@ def run_seeds(
         checkpoint = ckpt_dir / "best_model.pth"
 
         if not skip_training:
-            _run(
-                [sys.executable, "scripts/train.py", "--config", str(seed_config_path)]
-            )
+            _run_cli(["train", "--config", str(seed_config_path)])
         if not checkpoint.exists():
             console.print(
                 f"[yellow]No checkpoint at {checkpoint}; skipping seed {seed}.[/yellow]"
             )
             continue
 
-        _run(
+        _run_cli(
             [
-                sys.executable,
-                "scripts/eval.py",
+                "eval",
                 "--config",
                 str(seed_config_path),
                 "--checkpoint",
@@ -124,12 +118,10 @@ def run_seeds(
 
         per_seed_metrics[seed] = _metrics_for_seed(out_dir / "eval_predictions.npz")
 
-    _report(per_seed_metrics, base_config["data"]["class_names"], output_root)
+    _report(per_seed_metrics, output_root)
 
 
-def _report(
-    per_seed_metrics: dict[int, dict], class_names: list, output_root: Path
-) -> None:
+def _report(per_seed_metrics: dict[int, dict], output_root: Path) -> None:
     """Write per-seed and summary CSVs and print a mean +/- CI table."""
     if not per_seed_metrics:
         console.print("[red]No completed seeds to aggregate.[/red]")
@@ -170,25 +162,3 @@ def _report(
     console.print(table)
     console.print(f"[green]Per-run metrics: {per_seed_csv}[/green]")
     console.print(f"[green]Summary: {summary_csv}[/green]")
-
-
-def main(
-    config: Annotated[str, typer.Option(help="Path to config file")] = "config.yaml",
-    seeds: Annotated[
-        str, typer.Option(help="Comma-separated seeds, e.g. 25,26,27")
-    ] = "25,26,27",
-    output_dir: Annotated[
-        str, typer.Option(help="Root directory for per-seed artifacts")
-    ] = "results/seeds",
-    skip_training: Annotated[
-        bool,
-        typer.Option(help="Only evaluate existing per-seed checkpoints"),
-    ] = False,
-):
-    """Run MelanomaNet across multiple seeds and aggregate metrics."""
-    seed_list = [int(s) for s in seeds.split(",") if s.strip()]
-    run_seeds(config, seed_list, Path(output_dir), skip_training)
-
-
-if __name__ == "__main__":
-    typer.run(main)
